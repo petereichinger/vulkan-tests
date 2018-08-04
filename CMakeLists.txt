@@ -31,7 +31,13 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${Vulkan_INCLUDE_DIR}
     ${Vulkan_INCLUDE_DIRS}
     )
+
 target_link_libraries(${PROJECT_NAME}
     glfw ${GLFW_LIBRARIES}
     ${Vulkan_LIBRARIES}
     )
+
+message(${CMAKE_SOURCE_DIR}/shader/compile.sh)
+
+#add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+#        COMMAND ${CMAKE_SOURCE_DIR}/shader/compile.sh)

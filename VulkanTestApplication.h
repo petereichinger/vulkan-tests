@@ -49,21 +49,38 @@ private:
     const bool enableValidationLayers = true;
 #endif
 
+
+    // Window to render to
+    GLFWwindow* window;
+    // Instance of Vulkan (only one should exist I think)
+    VkInstance instance;
+    // Debug callback
+    VkDebugReportCallbackEXT callback;
+    // Physical device (GPU)
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    // Logical device (there can be multiple logical devices for one physical one)
+    VkDevice device;
+    // Queue for graphics
+    VkQueue graphicsQueue;
+    // Surface to render to this is an extension
+    VkSurfaceKHR surface;
+    // Queue for presenting images
+    VkQueue presentQueue;
+    // Swapchain with multiple images that allow for buffering
+    VkSwapchainKHR swapChain;
+    // Handles for the images of the swap chain
+    std::vector<VkImage> swapChainImages;
+    // Formate and size of swap chain images
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
+    std::vector<VkImageView> swapChainImageViews;
+
+
     void initWindow();
     void initVulkan();
     void mainLoop();
     void cleanup();
     void createInstance();
-
-    GLFWwindow* window;
-    VkInstance instance;
-    VkDebugReportCallbackEXT callback;
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkDevice device;
-    VkQueue graphicsQueue;
-    VkSurfaceKHR surface;
-    VkQueue presentQueue;
-
 
     bool checkValidationLayerSupport();
     std::vector<const char*> getRequiredExtensions();
@@ -88,4 +105,8 @@ private:
     VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR const & capabilities);
 
     void createSwapChain();
+
+    void createImageViews();
+
+    void createGraphicsPipeline();
 };
