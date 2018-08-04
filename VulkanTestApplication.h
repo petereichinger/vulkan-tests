@@ -11,7 +11,13 @@
 #include <iostream>
 
 
+struct QueueFamilyIndices {
+    int graphicsFamily = -1;
 
+    bool isComplete() {
+        return graphicsFamily >= 0;
+    }
+};
 
 class VulkanTestApplication {
 public:
@@ -41,24 +47,20 @@ private:
     GLFWwindow* window;
     VkInstance instance;
     VkDebugReportCallbackEXT callback;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice device;
+    VkQueue graphicsQueue;
+
 
     bool checkValidationLayerSupport();
     std::vector<const char*> getRequiredExtensions();
-
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-            VkDebugReportFlagsEXT flags,
-            VkDebugReportObjectTypeEXT objType,
-            uint64_t obj,
-            size_t location,
-            int32_t code,
-            const char* layerPrefix,
-            const char* msg,
-            void* userData) {
-
-        std::cerr << "validation layer: " << msg << std::endl;
-
-        return VK_FALSE;
-    }
-
     void setupDebugCallback();
+
+    void pickPhysicalDevice();
+
+    bool isDeviceSuitable(VkPhysicalDevice const &pT);
+
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+
+    void createLogicalDevice();
 };
