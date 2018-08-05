@@ -6,6 +6,9 @@ project(${PROJECT_NAME})
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
+# Set some paths
+
+set(SHADER_DIRECTORY ${CMAKE_SOURCE_DIR}/shader)
 
 #Configure project to build with C++11
 set(CMAKE_CXX_STANDARD 11)
@@ -39,5 +42,10 @@ target_link_libraries(${PROJECT_NAME}
 
 message(${CMAKE_SOURCE_DIR}/shader/compile.sh)
 
-#add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-#        COMMAND ${CMAKE_SOURCE_DIR}/shader/compile.sh)
+add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
+       COMMAND ${SHADER_DIRECTORY}/compile.sh
+       WORKING_DIRECTORY ${SHADER_DIRECTORY})
+
+
+# execute_process(COMMAND ${SHADER_DIRECTORY}/compile.sh
+#                 WORKING_DIRECTORY ${SHADER_DIRECTORY})
