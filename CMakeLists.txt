@@ -40,12 +40,10 @@ target_link_libraries(${PROJECT_NAME}
     ${Vulkan_LIBRARIES}
     )
 
-message(${CMAKE_SOURCE_DIR}/shader/compile.sh)
-
-add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
-       COMMAND ${SHADER_DIRECTORY}/compile.sh
-       WORKING_DIRECTORY ${SHADER_DIRECTORY})
-
-
-# execute_process(COMMAND ${SHADER_DIRECTORY}/compile.sh
-#                 WORKING_DIRECTORY ${SHADER_DIRECTORY})
+IF (WIN32)
+    # TODO: build shaders
+ELSE()
+    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
+            COMMAND ${SHADER_DIRECTORY}/compile.sh
+            WORKING_DIRECTORY ${SHADER_DIRECTORY})
+ENDIF ()
