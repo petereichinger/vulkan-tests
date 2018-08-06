@@ -8,7 +8,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 # Set some paths
 
-set(SHADER_DIRECTORY ${CMAKE_SOURCE_DIR}/shaders)
+set(SHADER_DIRECTORY ${CMAKE_SOURCE_DIR}/src/shaders)
 
 #Configure project to build with C++11
 set(CMAKE_CXX_STANDARD 11)
@@ -25,8 +25,8 @@ add_subdirectory(glfw)
 
 #Set source files
 add_executable(${PROJECT_NAME}
-        main.cpp
-        VulkanTestApplication.h VulkanTestApplication.cpp)
+        src/main.cpp
+        src/VulkanTestApplication.h src/VulkanTestApplication.cpp)
 
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -43,7 +43,7 @@ target_link_libraries(${PROJECT_NAME}
 IF (WIN32)
     # TODO: build shaders
 ELSE()
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
     add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
-            COMMAND ${SHADER_DIRECTORY}/compile.sh
-            WORKING_DIRECTORY ${SHADER_DIRECTORY})
+            COMMAND ${SHADER_DIRECTORY}/compile.sh)
 ENDIF ()
