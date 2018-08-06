@@ -75,9 +75,22 @@ private:
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
 
-    // layout of the pipeline
+    VkRenderPass renderPass;
+
+    // pipeline is used in a renderpass
+    VkPipeline graphicsPipeline;
+
+    // layout of the pipeline (number of uniforms ans push values)
     VkPipelineLayout pipelineLayout;
 
+    std::vector<VkFramebuffer> swapChainFramebuffers;
+
+    VkCommandPool commandPool;
+
+    std::vector<VkCommandBuffer> commandBuffers;
+
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
 
     void initWindow();
     void initVulkan();
@@ -116,4 +129,14 @@ private:
     void createGraphicsPipeline();
 
     VkShaderModule createShaderModule(const std::vector<char>& code);
+
+    void createFramebuffers();
+
+    void createCommandPool();
+
+    void createCommandBuffers();
+
+    void drawFrame();
+
+    void createSemaphores();
 };
