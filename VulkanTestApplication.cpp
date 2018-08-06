@@ -12,7 +12,8 @@
 #include "VulkanTestApplication.h"
 #include <fstream>
 
-VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback) {
+VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
+                                      const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback) {
     auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
     if (func != nullptr) {
         return func(instance, pCreateInfo, pAllocator, pCallback);
@@ -21,8 +22,10 @@ VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCa
     }
 }
 
-void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks* pAllocator) {
-    auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
+void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback,
+                                   const VkAllocationCallbacks *pAllocator) {
+    auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(instance,
+                                                                            "vkDestroyDebugReportCallbackEXT");
     if (func != nullptr) {
         func(instance, callback, pAllocator);
     }
@@ -34,16 +37,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         uint64_t obj,
         size_t location,
         int32_t code,
-        const char* layerPrefix,
-        const char* msg,
-        void* userData) {
+        const char *layerPrefix,
+        const char *msg,
+        void *userData) {
 
     std::cerr << "validation layer: " << msg << std::endl;
 
     return VK_FALSE;
 }
 
-static std::vector<char> readFile(const std::string& filename) {
+static std::vector<char> readFile(const std::string &filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
@@ -61,7 +64,6 @@ static std::vector<char> readFile(const std::string& filename) {
 }
 
 
-
 void VulkanTestApplication::run() {
     initWindow();
     initVulkan();
@@ -73,7 +75,7 @@ void VulkanTestApplication::initWindow() {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(WIDTH,HEIGHT, "Vulkan", nullptr, nullptr);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
 }
 
 void VulkanTestApplication::initVulkan() {
@@ -135,12 +137,12 @@ void VulkanTestApplication::createInstance() {
     }
 }
 
-std::vector<const char*> VulkanTestApplication::getRequiredExtensions() {
+std::vector<const char *> VulkanTestApplication::getRequiredExtensions() {
     uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
+    const char **glfwExtensions;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-    std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+    std::vector<const char *> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
     if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
@@ -155,7 +157,8 @@ std::vector<const char*> VulkanTestApplication::getRequiredExtensions() {
     for (auto i = 0; i < extensions.size(); ++i) {
         auto found = std::find_if(supportedExtensions.begin(), supportedExtensions.end(),
                                   [&](VkExtensionProperties props) {
-                                      return strcmp(props.extensionName, extensions[i]);} );
+                                      return strcmp(props.extensionName, extensions[i]);
+                                  });
         if (found == supportedExtensions.end()) {
             std::stringstream ss;
             ss << "extension '" << extensions[i] << "' not supported";
@@ -175,10 +178,10 @@ bool VulkanTestApplication::checkValidationLayerSupport() {
     vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
 
-    for (const char* layerName : validationLayers) {
+    for (const char *layerName : validationLayers) {
         bool layerFound = false;
 
-        for (const auto& layerProperties : availableLayers) {
+        for (const auto &layerProperties : availableLayers) {
             if (strcmp(layerName, layerProperties.layerName) == 0) {
                 layerFound = true;
                 break;
@@ -202,7 +205,6 @@ void VulkanTestApplication::cleanup() {
     }
 
 
-
     vkDestroyCommandPool(device, commandPool, nullptr);
 
     for (auto framebuffer : swapChainFramebuffers) {
@@ -217,7 +219,7 @@ void VulkanTestApplication::cleanup() {
         vkDestroyImageView(device, imageView, nullptr);
     }
 
-    vkDestroySwapchainKHR(device,swapChain,nullptr);
+    vkDestroySwapchainKHR(device, swapChain, nullptr);
     vkDestroyDevice(device, nullptr);
 
     if (enableValidationLayers) {
@@ -225,7 +227,7 @@ void VulkanTestApplication::cleanup() {
     }
 
     vkDestroySurfaceKHR(instance, surface, nullptr);
-    vkDestroyInstance(instance,nullptr);
+    vkDestroyInstance(instance, nullptr);
     glfwDestroyWindow(window);
 
     glfwTerminate();
@@ -246,16 +248,16 @@ void VulkanTestApplication::setupDebugCallback() {
 
 void VulkanTestApplication::pickPhysicalDevice() {
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance,&deviceCount, nullptr);
-    if (deviceCount == 0){
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    if (deviceCount == 0) {
         throw std::runtime_error("No device with Vulkan support found");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-    for (const auto& device : devices){
-        if (isDeviceSuitable(device)){
+    for (const auto &device : devices) {
+        if (isDeviceSuitable(device)) {
             physicalDevice = device;
             break;
         }
@@ -266,7 +268,7 @@ void VulkanTestApplication::pickPhysicalDevice() {
     }
 }
 
-bool VulkanTestApplication::isDeviceSuitable(VkPhysicalDevice const & device) {
+bool VulkanTestApplication::isDeviceSuitable(VkPhysicalDevice const &device) {
     // Can query properties and features of the physical device
     VkPhysicalDeviceProperties deviceProperties;
     VkPhysicalDeviceFeatures deviceFeatures;
@@ -297,7 +299,7 @@ QueueFamilyIndices VulkanTestApplication::findQueueFamilies(VkPhysicalDevice dev
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
     int i = 0;
-    for (const auto& queueFamily : queueFamilies) {
+    for (const auto &queueFamily : queueFamilies) {
         if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
             indices.graphicsFamily = i;
         }
@@ -365,7 +367,6 @@ void VulkanTestApplication::createLogicalDevice() {
 }
 
 
-
 void VulkanTestApplication::createSurface() {
     if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
@@ -381,7 +382,7 @@ bool VulkanTestApplication::checkDeviceExtensionSupport(VkPhysicalDevice const &
 
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
-    for (const auto& extension : availableExtensions) {
+    for (const auto &extension : availableExtensions) {
         requiredExtensions.erase(extension.extensionName);
     }
 
@@ -411,12 +412,14 @@ SwapChainSupportDetails VulkanTestApplication::querySwapChainSupport(VkPhysicalD
     return details;
 }
 
-VkSurfaceFormatKHR VulkanTestApplication::chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const & availableFormats) {
+VkSurfaceFormatKHR
+VulkanTestApplication::chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const &availableFormats) {
     if (availableFormats.size() == 1 && availableFormats[0].format == VK_FORMAT_UNDEFINED) {
         return {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR};
     }
-    for (const auto& availableFormat : availableFormats) {
-        if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+    for (const auto &availableFormat : availableFormats) {
+        if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
+            availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
             return availableFormat;
         }
     }
@@ -427,7 +430,7 @@ VkPresentModeKHR
 VulkanTestApplication::chooseSwapPresentMode(std::vector<VkPresentModeKHR> const &availablePresentModes) {
     VkPresentModeKHR bestMode = VK_PRESENT_MODE_FIFO_KHR;
 
-    for (const auto& availablePresentMode : availablePresentModes) {
+    for (const auto &availablePresentMode : availablePresentModes) {
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
             return availablePresentMode;
         } else if (availablePresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
@@ -438,14 +441,16 @@ VulkanTestApplication::chooseSwapPresentMode(std::vector<VkPresentModeKHR> const
     return bestMode;
 }
 
-VkExtent2D VulkanTestApplication::chooseSwapExtent(VkSurfaceCapabilitiesKHR const & capabilities) {
+VkExtent2D VulkanTestApplication::chooseSwapExtent(VkSurfaceCapabilitiesKHR const &capabilities) {
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     } else {
         VkExtent2D actualExtent = {WIDTH, HEIGHT};
 
-        actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
-        actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
+        actualExtent.width = std::max(capabilities.minImageExtent.width,
+                                      std::min(capabilities.maxImageExtent.width, actualExtent.width));
+        actualExtent.height = std::max(capabilities.minImageExtent.height,
+                                       std::min(capabilities.maxImageExtent.height, actualExtent.height));
 
         return actualExtent;
     }
@@ -595,7 +600,8 @@ void VulkanTestApplication::createGraphicsPipeline() {
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.colorWriteMask =
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
 
     VkPipelineColorBlendStateCreateInfo colorBlending = {};
@@ -645,7 +651,7 @@ VkShaderModule VulkanTestApplication::createShaderModule(const std::vector<char>
     VkShaderModuleCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+    createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
     VkShaderModule shaderModule;
     if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
@@ -784,7 +790,8 @@ void VulkanTestApplication::drawFrame() {
     vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(),
+                          imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
