@@ -34,6 +34,7 @@ private:
     const std::string applicationName= "VulkanTest";
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
+    const int MAX_FRAMES_IN_FLIGHT = 2;
 
     const std::vector<const char*> validationLayers = {
             "VK_LAYER_LUNARG_standard_validation"
@@ -89,8 +90,10 @@ private:
 
     std::vector<VkCommandBuffer> commandBuffers;
 
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
+    std::vector<VkSemaphore> imageAvailableSemaphores;
+    std::vector<VkSemaphore> renderFinishedSemaphores;
+    std::vector<VkFence> inFlightFences;
+    size_t currentFrame = 0;
 
     void initWindow();
     void initVulkan();
@@ -138,5 +141,5 @@ private:
 
     void drawFrame();
 
-    void createSemaphores();
+    void createSyncObjects();
 };
