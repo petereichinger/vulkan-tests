@@ -220,10 +220,6 @@ void VulkanTestApplication::cleanup() {
 
     vkDestroyCommandPool(device, commandPool, nullptr);
 
-    for (auto framebuffer : swapChainFramebuffers) {
-        vkDestroyFramebuffer(device, framebuffer, nullptr);
-    }
-
     vkDestroyDevice(device, nullptr);
 
     if (enableValidationLayers) {
@@ -232,6 +228,7 @@ void VulkanTestApplication::cleanup() {
 
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
+
     glfwDestroyWindow(window);
 
     glfwTerminate();
