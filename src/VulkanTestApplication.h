@@ -10,7 +10,13 @@
 #include <vector>
 #include <iostream>
 #include <limits>
+
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <chrono>
+
 #include <array>
 
 struct QueueFamilyIndices {
@@ -56,6 +62,13 @@ struct Vertex {
         attributeDescriptions[1].offset = offsetof(Vertex, color);
         return attributeDescriptions;
     }
+};
+
+
+struct UniformBufferObject {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
 };
 
 class VulkanTestApplication {
@@ -114,7 +127,9 @@ private:
     // pipeline is used in a renderpass
     VkPipeline graphicsPipeline;
 
-    // layout of the pipeline (number of uniforms ans push values)
+    VkDescriptorSetLayout descriptorSetLayout;
+
+    // layout of the pipeline (number of uniforms and push values)
     VkPipelineLayout pipelineLayout;
 
     std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -141,10 +156,15 @@ private:
     };
 
 
+
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
+    std::vector<VkBuffer> uniformBuffers;
+    std::vector<VkDeviceMemory> uniformBuffersMemory;
+    VkDescriptorPool descriptorPool;
+    std::vector<VkDescriptorSet> descriptorSets;
 
 
     void initWindow();
@@ -209,4 +229,14 @@ private:
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
     void createIndexBuffer();
+
+    void createDescriptorSetLayout();
+
+    void createUniformBuffer();
+
+    void updateUniformBuffer(uint32_t imageIndex);
+
+    void createDescriptorSets();
+
+    void createDescriptorPool();
 };
