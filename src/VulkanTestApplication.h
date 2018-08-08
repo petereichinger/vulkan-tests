@@ -246,6 +246,14 @@ private:
 
     void createTextureImage();
 
-    void createImage(int width, int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits bits,
-                     VkMemoryPropertyFlagBits flagBits, VkImage pT, VkDeviceMemory pMemory_t);
+    void createImage(int width, int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags bits,
+                     VkMemoryPropertyFlags flagBits, VkImage& image, VkDeviceMemory& imageMemory);
+
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
 };
