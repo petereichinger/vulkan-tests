@@ -19,6 +19,8 @@
 
 #include <array>
 
+
+
 struct QueueFamilyIndices {
     uint32_t graphicsFamily = std::numeric_limits<uint32_t>::max();
     uint32_t presentFamily = std::numeric_limits<uint32_t>::max();
@@ -166,6 +168,8 @@ private:
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
 
+    VkImage textureImage;
+    VkDeviceMemory textureImageMemory;
 
     void initWindow();
     void initVulkan();
@@ -239,4 +243,9 @@ private:
     void createDescriptorSets();
 
     void createDescriptorPool();
+
+    void createTextureImage();
+
+    void createImage(int width, int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlagBits bits,
+                     VkMemoryPropertyFlagBits flagBits, VkImage pT, VkDeviceMemory pMemory_t);
 };

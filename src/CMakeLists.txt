@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Vulkan REQUIRED)
-find_package(glm REQUIRED)
 
 message("${GLM_INCLUDE_DIRS}")
 
@@ -22,12 +21,11 @@ add_subdirectory(glfw)
 #Set source files
 add_executable(${PROJECT_NAME}
         main.cpp
-        VulkanTestApplication.h VulkanTestApplication.cpp)
+        VulkanTestApplication.h VulkanTestApplication.cpp stb_image.h)
 
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC
     glfw/include
-    ${GLM_INCLUDE_DIRS}
     ${Vulkan_INCLUDE_DIR}
     ${Vulkan_INCLUDE_DIRS}
     )
@@ -45,3 +43,16 @@ ELSE()
             COMMAND ${SHADER_DIRECTORY}/compile.sh
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
 ENDIF ()
+
+# copy textures to output
+
+set(TEXTURE_DIR ${CMAKE_SOURCE_DIR}/textures)
+
+file(GLOB files "${TEXTURE_DIR}/*.jpg")
+foreach(file ${files})
+    get_filename_component(FILENAME ${file} NAME)
+    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${file}
+            ${CMAKE_BINARY_DIR}/textures/${FILENAME})
+endforeach()
