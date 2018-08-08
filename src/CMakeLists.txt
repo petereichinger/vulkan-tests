@@ -1,9 +1,4 @@
 
-if(${CMAKE_VERSION} VERSION_LESS "3.7.0")
-    message("using custom cmake module for finding vulkan")
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-endif()
-
 # Set some paths
 
 set(SHADER_DIRECTORY ${CMAKE_SOURCE_DIR}/src/shaders)
