@@ -17,3 +17,5 @@ endif()
 
 add_subdirectory(src)
 
+file(COPY meshes DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY textures DESTINATION ${CMAKE_BINARY_DIR})

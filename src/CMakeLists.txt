@@ -45,15 +45,4 @@ ELSE()
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 ENDIF ()
 
-# copy textures to output
 
-set(TEXTURE_DIR ${CMAKE_SOURCE_DIR}/textures)
-
-file(GLOB files "${TEXTURE_DIR}/*.jpg")
-foreach(file ${files})
-    get_filename_component(FILENAME ${file} NAME)
-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${file}
-            ${CMAKE_BINARY_DIR}/textures/${FILENAME})
-endforeach()
