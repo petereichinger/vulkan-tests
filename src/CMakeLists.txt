@@ -40,9 +40,6 @@ ELSE()
     add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
             COMMAND ${SHADER_DIRECTORY}/compile.sh
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
-    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
-            COMMAND ${CMAKE_SOURCE_DIR}/getassets.sh
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 ENDIF ()
 
 

@@ -13,9 +13,13 @@ if(${CMAKE_VERSION} VERSION_LESS "3.7.0")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 endif()
 
-#message("${CMAKE_BINARY_DIR}")
-
 add_subdirectory(src)
-
-file(COPY meshes DESTINATION ${CMAKE_BINARY_DIR})
-file(COPY textures DESTINATION ${CMAKE_BINARY_DIR})
+IF (WIN32)
+    # TODO: GET ASSETS
+ELSE()
+    add_custom_target(GetAssets ALL
+        DEPENDS meshes/chalet.obj textures/chalet.jpg)
+    add_custom_command(OUTPUT meshes/chalet.obj textures/chalet.jpg
+            COMMAND ${CMAKE_SOURCE_DIR}/getassets.sh
+            )
+ENDIF ()
