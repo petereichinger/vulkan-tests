@@ -515,6 +515,7 @@ void VulkanTestApplication::createSwapChain() {
 
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+    std::cout<< vk::to_string(vk::PresentModeKHR(presentMode)) << std::endl;
     VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -594,8 +595,6 @@ void VulkanTestApplication::createGraphicsPipeline() {
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
 
     auto bindingDescription = Vertex::getBindingDescription();
     auto attributeDescriptions = Vertex::getAttributeDescriptions();
@@ -644,9 +643,16 @@ void VulkanTestApplication::createGraphicsPipeline() {
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = msaaSamples;
 
+    VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.stencilTestEnable = VK_FALSE;
+
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-    colorBlendAttachment.colorWriteMask =
-            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
 
     VkPipelineColorBlendStateCreateInfo colorBlending = {};
@@ -664,23 +670,10 @@ void VulkanTestApplication::createGraphicsPipeline() {
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
     }
-
-    VkPipelineDepthStencilStateCreateInfo depthStencil = {};
-    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = VK_TRUE;
-    depthStencil.depthWriteEnable = VK_TRUE;
-    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-    depthStencil.depthBoundsTestEnable = VK_FALSE;
-    depthStencil.minDepthBounds = 0.0f; // Optional
-    depthStencil.maxDepthBounds = 1.0f; // Optional
-    depthStencil.stencilTestEnable = VK_FALSE;
-    depthStencil.front = {}; // Optional
-    depthStencil.back = {}; // Optional
 
     VkGraphicsPipelineCreateInfo pipelineInfo = {};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -691,8 +684,8 @@ void VulkanTestApplication::createGraphicsPipeline() {
     pipelineInfo.pViewportState = &viewportState;
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDepthStencilState = &depthStencil;
+    pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.layout = pipelineLayout;
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
@@ -1288,7 +1281,7 @@ VulkanTestApplication::createImage(int width, int height, uint32_t mipLevels, Vk
     imageInfo.tiling = tiling;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = usage;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.samples = numSamples;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     if (vkCreateImage(device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
@@ -1351,11 +1344,10 @@ void VulkanTestApplication::transitionImageLayout(VkImage image, VkFormat format
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout = oldLayout;
     barrier.newLayout = newLayout;
-
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
     barrier.image = image;
+
     if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
         barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 
@@ -1392,15 +1384,16 @@ void VulkanTestApplication::transitionImageLayout(VkImage image, VkFormat format
 
         sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    } else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+    }
+    else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
         barrier.srcAccessMask = 0;
         barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    } else {
+    }
+    else {
         throw std::invalid_argument("unsupported layout transition!");
     }
-
 
     vkCmdPipelineBarrier(
             commandBuffer,
@@ -1410,7 +1403,6 @@ void VulkanTestApplication::transitionImageLayout(VkImage image, VkFormat format
             0, nullptr,
             1, &barrier
     );
-
 
     endSingleTimeCommands(commandBuffer);
 }
@@ -1502,14 +1494,10 @@ void VulkanTestApplication::createTextureSampler() {
 void VulkanTestApplication::createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
 
-    createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, depthFormat,
-                VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                depthImage, depthImageMemory);
+    createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
-    transitionImageLayout(depthImage, depthFormat,
-                          VK_IMAGE_LAYOUT_UNDEFINED,
-                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+
+    transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
 }
 
 VkFormat VulkanTestApplication::findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
