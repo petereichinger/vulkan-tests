@@ -192,9 +192,9 @@ private:
     VkImageView textureImageView;
     VkSampler textureSampler;
 
-    std::vector<VkImage> depthImages;
-    std::vector<VkDeviceMemory> depthImagesMemory;
-    std::vector<VkImageView> depthImagesView;
+    VkImage depthImage;
+    VkDeviceMemory depthImageMemory;
+    VkImageView depthImageView;
 
     VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 

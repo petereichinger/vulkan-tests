@@ -799,7 +799,7 @@ void VulkanTestApplication::createFramebuffers() {
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
         std::array<VkImageView, 3> attachments = {
                 colorImageView,
-                depthImagesView[i],
+                depthImageView,
                 swapChainImageViews[i]
         };
 
@@ -1017,11 +1017,10 @@ void VulkanTestApplication::cleanupSwapChain() {
     vkDestroyImage(device, colorImage, nullptr);
     vkFreeMemory(device, colorImageMemory, nullptr);
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-        vkDestroyImageView(device, depthImagesView[i], nullptr);
-        vkDestroyImage(device, depthImages[i], nullptr);
-        vkFreeMemory(device, depthImagesMemory[i], nullptr);
-    }
+    vkDestroyImageView(device, depthImageView, nullptr);
+    vkDestroyImage(device, depthImage, nullptr);
+    vkFreeMemory(device, depthImageMemory, nullptr);
+
 
     for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
         vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
@@ -1502,21 +1501,15 @@ void VulkanTestApplication::createTextureSampler() {
 
 void VulkanTestApplication::createDepthResources() {
     VkFormat depthFormat = findDepthFormat();
-    depthImages.resize(swapChainImages.size());
-    depthImagesMemory.resize(swapChainImages.size());
-    depthImagesView.resize(swapChainImages.size());
 
-    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-        createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, depthFormat,
-                    VK_IMAGE_TILING_OPTIMAL,
-                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                    depthImages[i], depthImagesMemory[i]);
-        depthImagesView[i] = createImageView(depthImages[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
-        transitionImageLayout(depthImages[i], depthFormat,
-                              VK_IMAGE_LAYOUT_UNDEFINED,
-                              VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
-    }
-
+    createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, depthFormat,
+                VK_IMAGE_TILING_OPTIMAL,
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                depthImage, depthImageMemory);
+    depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+    transitionImageLayout(depthImage, depthFormat,
+                          VK_IMAGE_LAYOUT_UNDEFINED,
+                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
 }
 
 VkFormat VulkanTestApplication::findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
