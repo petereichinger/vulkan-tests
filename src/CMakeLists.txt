@@ -10,8 +10,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Vulkan REQUIRED)
 
-message("${GLM_INCLUDE_DIRS}")
-
 # build glfw without docs/tests/examples
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -21,7 +19,7 @@ add_subdirectory(glfw)
 #Set source files
 add_executable(${PROJECT_NAME}
         main.cpp
-        VulkanTestApplication.h VulkanTestApplication.cpp stb_image.h)
+        VulkanTestApplication.h VulkanTestApplication.cpp stb_image.h tiny_obj_loader.h)
 
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -42,6 +40,9 @@ ELSE()
     add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
             COMMAND ${SHADER_DIRECTORY}/compile.sh
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
+    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
+            COMMAND ${CMAKE_SOURCE_DIR}/getassets.sh
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 ENDIF ()
 
 # copy textures to output

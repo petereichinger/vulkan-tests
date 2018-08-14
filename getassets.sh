@@ -1,14 +1,23 @@
-rm -rf textures 2>/dev/null
-rm -rf meshes 2>/dev/null
+#!/bin/bash
 
-mkdir textures
-mkdir meshes
+mkdir textures 2>/dev/null
+mkdir meshes 2>/dev/null
 
-wget -O textures/texture.jpg https://vulkan-tutorial.com/images/texture.jpg
-wget -O textures/chalet.jpg https://vulkan-tutorial.com/resources/chalet.jpg
+function getTexture {
+    if [ ! -f $1 ]; then
+        echo "Getting $1 from $2"
+        wget -O $1 $2 > /dev/null
+    fi
+}
 
+getTexture textures/texture.jpg https://vulkan-tutorial.com/images/texture.jpg
+getTexture textures/chalet.jpg https://vulkan-tutorial.com/resources/chalet.jpg
 
-wget -O meshes/chalet.obj.zip https://vulkan-tutorial.com/resources/chalet.obj.zip
-cd meshes
-unzip chalet.obj.zip
-rm chalet.obj.zip
+if [ ! -f meshes/chalet.obj ]; then
+
+    echo "Getting chalet.obj"
+    wget -O meshes/chalet.obj.zip https://vulkan-tutorial.com/resources/chalet.obj.zip > /dev/null
+    cd meshes
+    unzip chalet.obj.zip > /dev/null
+    rm chalet.obj.zip
+fi
