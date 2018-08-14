@@ -196,6 +196,11 @@ private:
     std::vector<VkDeviceMemory> depthImagesMemory;
     std::vector<VkImageView> depthImagesView;
 
+    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkImage colorImage;
+    VkDeviceMemory colorImageMemory;
+    VkImageView colorImageView;
 
     void initWindow();
     void initVulkan();
@@ -273,8 +278,9 @@ private:
     void createTextureImage();
 
 
-    void createImage(int width, int height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags bits,
-                         VkMemoryPropertyFlags flagBits, VkImage &image, VkDeviceMemory &imageMemory);
+    void createImage(int width, int height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format,
+                         VkImageTiling tiling, VkImageUsageFlags bits, VkMemoryPropertyFlags flagBits, VkImage &image,
+                         VkDeviceMemory &imageMemory);
 
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
@@ -301,4 +307,8 @@ private:
 
     void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight,
                              uint32_t mipLevels);
+
+    VkSampleCountFlagBits getMaxUsableSampleCount();
+
+    void createColorResources() ;
 };
