@@ -38,9 +38,9 @@ struct QueueFamilyIndices {
 };
 
 struct SwapChainSupportDetails {
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
+    vk::SurfaceCapabilitiesKHR capabilities;
+    std::vector<vk::SurfaceFormatKHR> formats;
+    std::vector<vk::PresentModeKHR> presentModes;
 };
 
 struct Vertex {
@@ -141,16 +141,16 @@ private:
     // Queue for graphics
     vk::Queue graphicsQueue;
     // Surface to render to this is an extension
-    VkSurfaceKHR surface;
+    vk::SurfaceKHR surface;
     // Queue for presenting images
     vk::Queue presentQueue;
     // Swapchain with multiple images that allow for buffering
     VkSwapchainKHR swapChain = VK_NULL_HANDLE;
     // Handles for the images of the swap chain
-    std::vector<VkImage> swapChainImages;
+    std::vector<vk::Image> swapChainImages;
     // Formate and size of swap chain images
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
+    vk::Format swapChainImageFormat;
+    vk::Extent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
 
     VkRenderPass renderPass;
@@ -225,11 +225,11 @@ private:
 
     bool checkDeviceExtensionSupport(VkPhysicalDevice const &device);
 
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+    SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
 
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> const &  availableFormats);
-    VkPresentModeKHR chooseSwapPresentMode( std::vector<VkPresentModeKHR> const & availablePresentModes);
-    VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR const & capabilities);
+    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR> &availableFormats);
+    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR> &availablePresentModes);
+    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR &capabilities);
 
     void createSwapChain();
 
