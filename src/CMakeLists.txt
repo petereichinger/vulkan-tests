@@ -24,6 +24,7 @@ add_executable(${PROJECT_NAME}
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC
     glfw/include
+    external
     ${Vulkan_INCLUDE_DIR}
     ${Vulkan_INCLUDE_DIRS}
     )
