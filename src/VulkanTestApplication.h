@@ -131,19 +131,19 @@ private:
     // Window to render to
     GLFWwindow* window;
     // Instance of Vulkan (only one should exist I think)
-    VkInstance instance;
+    vk::Instance instance;
     // Debug callback
     VkDebugReportCallbackEXT callback;
     // Physical device (GPU)
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    vk::PhysicalDevice physicalDevice;
     // Logical device (there can be multiple logical devices for one physical one)
-    VkDevice device;
+    vk::Device device;
     // Queue for graphics
-    VkQueue graphicsQueue;
+    vk::Queue graphicsQueue;
     // Surface to render to this is an extension
     VkSurfaceKHR surface;
     // Queue for presenting images
-    VkQueue presentQueue;
+    vk::Queue presentQueue;
     // Swapchain with multiple images that allow for buffering
     VkSwapchainKHR swapChain = VK_NULL_HANDLE;
     // Handles for the images of the swap chain
