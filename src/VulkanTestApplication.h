@@ -217,7 +217,7 @@ private:
 
     bool isDeviceSuitable(VkPhysicalDevice const &pT);
 
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+    QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
 
     void createLogicalDevice();
 

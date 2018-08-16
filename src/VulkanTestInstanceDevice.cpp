@@ -174,25 +174,21 @@ bool VulkanTestApplication::isDeviceSuitable(VkPhysicalDevice const &device) {
     return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
-QueueFamilyIndices VulkanTestApplication::findQueueFamilies(VkPhysicalDevice device) {
+QueueFamilyIndices VulkanTestApplication::findQueueFamilies(vk::PhysicalDevice device) {
 
     // TODO: Convert to hpp
     QueueFamilyIndices indices;
 
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+    std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
 
-    int i = 0;
+    uint32_t i = 0U;
     for (const auto &queueFamily : queueFamilies) {
-        if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
+        if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)) {
             indices.graphicsFamily = i;
         }
 
-        VkBool32 presentSupport = static_cast<VkBool32>(false);
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+        auto presentSupport = device.getSurfaceSupportKHR(i, surface);
 
         if (queueFamily.queueCount > 0 && presentSupport) {
             indices.presentFamily = i;
