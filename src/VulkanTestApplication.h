@@ -48,32 +48,33 @@ struct Vertex {
     glm::vec4 color;
     glm::vec2 texCoord;
 
-    static VkVertexInputBindingDescription getBindingDescription() {
-        VkVertexInputBindingDescription bindingDescription = {};
+    static vk::VertexInputBindingDescription getBindingDescription() {
+        vk::VertexInputBindingDescription bindingDescription = {};
+
         bindingDescription.binding = 0;
         bindingDescription.stride = sizeof(Vertex);
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        bindingDescription.inputRate = vk::VertexInputRate::eVertex;
 
         return bindingDescription;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-        std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
+    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 3> attributeDescriptions = {};
 
         attributeDescriptions[0].binding = 0;
         attributeDescriptions[0].location = 0;
-        attributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributeDescriptions[0].offset = offsetof(Vertex, pos);
+        attributeDescriptions[0].format = vk::Format::eR32G32B32A32Sfloat;
+        attributeDescriptions[0].offset = static_cast<uint32_t>(offsetof(Vertex, pos));
 
         attributeDescriptions[1].binding = 0;
         attributeDescriptions[1].location = 1;
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributeDescriptions[1].offset = offsetof(Vertex, color);
+        attributeDescriptions[1].format = vk::Format::eR32G32B32A32Sfloat;
+        attributeDescriptions[1].offset = static_cast<uint32_t>(offsetof(Vertex, color));
 
         attributeDescriptions[2].binding = 0;
         attributeDescriptions[2].location = 2;
-        attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-        attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+        attributeDescriptions[2].format = vk::Format::eR32G32Sfloat;
+        attributeDescriptions[2].offset = static_cast<uint32_t>(offsetof(Vertex, texCoord));
 
         return attributeDescriptions;
     }
@@ -145,7 +146,7 @@ private:
     // Queue for presenting images
     vk::Queue presentQueue;
     // Swapchain with multiple images that allow for buffering
-    VkSwapchainKHR swapChain = VK_NULL_HANDLE;
+    vk::SwapchainKHR swapChain;
     // Handles for the images of the swap chain
     std::vector<vk::Image> swapChainImages;
     // Formate and size of swap chain images
@@ -156,12 +157,12 @@ private:
     vk::RenderPass renderPass;
 
     // pipeline is used in a renderpass
-    VkPipeline graphicsPipeline;
+    vk::Pipeline graphicsPipeline;
 
-    VkDescriptorSetLayout descriptorSetLayout;
+    vk::DescriptorSetLayout descriptorSetLayout;
 
     // layout of the pipeline (number of uniforms and push values)
-    VkPipelineLayout pipelineLayout;
+    vk::PipelineLayout pipelineLayout;
 
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
@@ -187,21 +188,21 @@ private:
     std::vector<VkDescriptorSet> descriptorSets;
 
     uint32_t mipLevels;
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
+    vk::Image textureImage;
+    vk::DeviceMemory textureImageMemory;
 
-    VkImageView textureImageView;
+    vk::ImageView textureImageView;
     VkSampler textureSampler;
 
-    VkImage depthImage;
-    VkDeviceMemory depthImageMemory;
-    VkImageView depthImageView;
+    vk::Image depthImage;
+    vk::DeviceMemory depthImageMemory;
+    vk::ImageView depthImageView;
 
     vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
-    VkImage colorImage;
-    VkDeviceMemory colorImageMemory;
-    VkImageView colorImageView;
+    vk::Image colorImage;
+    vk::DeviceMemory colorImageMemory;
+    vk::ImageView colorImageView;
 
     void initWindow();
     void initVulkan();
@@ -279,15 +280,16 @@ private:
     void createTextureImage();
 
 
-    void createImage(int width, int height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format,
-                         VkImageTiling tiling, VkImageUsageFlags bits, VkMemoryPropertyFlags flagBits, VkImage &image,
-                         VkDeviceMemory &imageMemory);
+    void createImage(int width, int height, uint32_t mipLevels, vk::SampleCountFlagBits numSamples, vk::Format format,
+                     vk::ImageTiling tiling, vk::ImageUsageFlags bits, vk::MemoryPropertyFlags flagBits,
+                     vk::Image &image,
+                     vk::DeviceMemory &imageMemory);
 
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
-    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout,
-                                   VkImageLayout newLayout, uint32_t mipLevels);
+    void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout,
+                               vk::ImageLayout newLayout, uint32_t mipLevels);
 
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
@@ -300,9 +302,10 @@ private:
 
     void createDepthResources();
 
-    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
-    VkFormat findDepthFormat();
-    bool hasStencilComponent(VkFormat format);
+    vk::Format findSupportedFormat(const std::vector<vk::Format> &candidates, vk::ImageTiling tiling,
+                                   vk::FormatFeatureFlags features);
+    vk::Format findDepthFormat();
+    bool hasStencilComponent(vk::Format format);
 
     void loadModel();
 
