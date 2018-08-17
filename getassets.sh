@@ -6,7 +6,7 @@ mkdir meshes 2>/dev/null
 function getTexture {
     if [ ! -f $1 ]; then
         echo "Getting $1 from $2"
-        wget -O $1 $2 > /dev/null
+        wget -4 -O $1 $2 > /dev/null
     fi
 }
 
@@ -16,7 +16,7 @@ getTexture textures/chalet.jpg https://vulkan-tutorial.com/resources/chalet.jpg
 if [ ! -f meshes/chalet.obj ]; then
 
     echo "Getting chalet.obj"
-    wget -O meshes/chalet.obj.zip https://vulkan-tutorial.com/resources/chalet.obj.zip > /dev/null
+    wget -4 -O meshes/chalet.obj.zip https://vulkan-tutorial.com/resources/chalet.obj.zip > /dev/null
     cd meshes
     unzip chalet.obj.zip > /dev/null
     rm chalet.obj.zip
