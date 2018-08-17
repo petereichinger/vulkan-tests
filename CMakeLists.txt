@@ -14,6 +14,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 endif()
 
 add_subdirectory(src)
+
 IF (WIN32)
     # TODO: GET ASSETS
 ELSE()
@@ -22,4 +23,5 @@ ELSE()
     add_custom_command(OUTPUT meshes/chalet.obj textures/chalet.jpg
             COMMAND ${CMAKE_SOURCE_DIR}/getassets.sh
             )
+    add_dependencies(${PROJECT_NAME} GetAssets)
 ENDIF ()
