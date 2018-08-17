@@ -6,7 +6,6 @@
 #include <sstream>
 #include <set>
 
-
 VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
                                       const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback) {
     auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
@@ -138,16 +137,28 @@ void VulkanTestApplication::pickPhysicalDevice() {
     std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
 
     for (const auto &device : devices) {
-        if (isDeviceSuitable(device)) {
+        std::cout << "Found GPU: " << device.getProperties().deviceName << std::endl;
+        if (isDeviceSuitable(device) && !physicalDevice) {
             physicalDevice = device;
             msaaSamples = getMaxUsableSampleCount();
-            break;
+        }
+    }
+
+    for(VkFormat format = VK_FORMAT_BEGIN_RANGE; format < VK_FORMAT_END_RANGE; format = (VkFormat) (format + 1)) {
+
+        auto properties = physicalDevice.getFormatProperties(vk::Format(format));
+
+        if (properties.bufferFeatures & vk::FormatFeatureFlagBits::eVertexBuffer) {
+//            std::
+            std::cout << vk::to_string(vk::Format(format)) << std::endl;
         }
     }
 
     if (!physicalDevice) {
         throw std::runtime_error("failed to find a suitable GPU!");
     }
+
+    std::cout << "Using " << physicalDevice.getProperties().deviceName <<std::endl;
 }
 
 bool VulkanTestApplication::isDeviceSuitable(VkPhysicalDevice const &device) {
@@ -175,10 +186,7 @@ bool VulkanTestApplication::isDeviceSuitable(VkPhysicalDevice const &device) {
 }
 
 QueueFamilyIndices VulkanTestApplication::findQueueFamilies(vk::PhysicalDevice device) {
-
-    // TODO: Convert to hpp
     QueueFamilyIndices indices;
-
 
     std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
 
