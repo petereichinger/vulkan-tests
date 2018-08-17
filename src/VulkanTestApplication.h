@@ -197,7 +197,7 @@ private:
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
-    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+    vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
 
     VkImage colorImage;
     VkDeviceMemory colorImageMemory;
@@ -309,7 +309,7 @@ private:
     void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight,
                              uint32_t mipLevels);
 
-    VkSampleCountFlagBits getMaxUsableSampleCount();
+    vk::SampleCountFlagBits getMaxUsableSampleCount();
 
     void createColorResources() ;
 };
