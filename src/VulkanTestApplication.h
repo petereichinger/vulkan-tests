@@ -151,7 +151,7 @@ private:
     // Formate and size of swap chain images
     vk::Format swapChainImageFormat;
     vk::Extent2D swapChainExtent;
-    std::vector<VkImageView> swapChainImageViews;
+    std::vector<vk::ImageView> swapChainImageViews;
 
     VkRenderPass renderPass;
 
@@ -293,8 +293,8 @@ private:
 
     void createTextureImageView();
 
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags,
-                                    uint32_t mipLevels);
+    vk::ImageView createImageView(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags,
+                                  uint32_t mipLevels);
 
     void createTextureSampler();
 

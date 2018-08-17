@@ -297,7 +297,7 @@ void VulkanTestApplication::createImageViews() {
     swapChainImageViews.resize(swapChainImages.size());
 
     for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-        swapChainImageViews[i] = createImageView(swapChainImages[i], VkFormat(swapChainImageFormat), VK_IMAGE_ASPECT_COLOR_BIT, 1);
+        swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, vk::ImageAspectFlagBits::eColor, 1);
     }
 }
 
@@ -1169,15 +1169,15 @@ void VulkanTestApplication::copyBufferToImage(VkBuffer buffer, VkImage image, ui
 }
 
 void VulkanTestApplication::createTextureImageView() {
-    textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+    textureImageView = createImageView(textureImage, vk::Format::eR8G8B8A8Unorm,vk::ImageAspectFlagBits::eColor, mipLevels);
 }
 
-VkImageView VulkanTestApplication::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags,
-                                                   uint32_t mipLevels) {
-    VkImageViewCreateInfo viewInfo = {};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+vk::ImageView VulkanTestApplication::createImageView(vk::Image image, vk::Format format,
+                                                     vk::ImageAspectFlags aspectFlags,
+                                                     uint32_t mipLevels) {
+    vk::ImageViewCreateInfo viewInfo = {};
     viewInfo.image = image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.viewType = vk::ImageViewType::e2D;
     viewInfo.format = format;
     viewInfo.subresourceRange.aspectMask = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel = 0;
@@ -1185,12 +1185,7 @@ VkImageView VulkanTestApplication::createImageView(VkImage image, VkFormat forma
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 1;
 
-    VkImageView imageView;
-    if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create texture image view!");
-    }
-
-    return imageView;
+    return device.createImageView(viewInfo);
 }
 
 void VulkanTestApplication::createTextureSampler() {
@@ -1221,12 +1216,12 @@ void VulkanTestApplication::createTextureSampler() {
 }
 
 void VulkanTestApplication::createDepthResources() {
-    VkFormat depthFormat = findDepthFormat();
+    vk::Format depthFormat = vk::Format(findDepthFormat());
 
-    createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
-    depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+    createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, VkFormat(depthFormat), VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+    depthImageView = createImageView(depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
 
-    transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+    transitionImageLayout(depthImage, VkFormat(depthFormat), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
 }
 
 VkFormat VulkanTestApplication::findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
@@ -1404,7 +1399,7 @@ void VulkanTestApplication::createColorResources() {
     VkFormat colorFormat = VkFormat(swapChainImageFormat);
 
     createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, colorFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, colorImageMemory);
-    colorImageView = createImageView(colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    colorImageView = createImageView(colorImage, vk::Format(colorFormat), vk::ImageAspectFlagBits::eColor, 1);
 
     transitionImageLayout(colorImage, colorFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1);
 }

@@ -144,16 +144,6 @@ void VulkanTestApplication::pickPhysicalDevice() {
         }
     }
 
-    for(VkFormat format = VK_FORMAT_BEGIN_RANGE; format < VK_FORMAT_END_RANGE; format = (VkFormat) (format + 1)) {
-
-        auto properties = physicalDevice.getFormatProperties(vk::Format(format));
-
-        if (properties.bufferFeatures & vk::FormatFeatureFlagBits::eVertexBuffer) {
-//            std::
-            std::cout << vk::to_string(vk::Format(format)) << std::endl;
-        }
-    }
-
     if (!physicalDevice) {
         throw std::runtime_error("failed to find a suitable GPU!");
     }
