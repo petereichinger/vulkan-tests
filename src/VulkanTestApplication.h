@@ -153,7 +153,7 @@ private:
     vk::Extent2D swapChainExtent;
     std::vector<vk::ImageView> swapChainImageViews;
 
-    VkRenderPass renderPass;
+    vk::RenderPass renderPass;
 
     // pipeline is used in a renderpass
     VkPipeline graphicsPipeline;
