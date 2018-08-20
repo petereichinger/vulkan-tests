@@ -19,7 +19,7 @@ add_subdirectory(glfw)
 #Set source files
 add_executable(${PROJECT_NAME}
         main.cpp
-        VulkanTestApplication.h VulkanTestApplication.cpp VulkanTestInstanceDevice.cpp)
+        VulkanTestApplication.h VulkanTestApplication.cpp)
 
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC
