@@ -109,7 +109,7 @@ void VulkanTestApplication::mainLoop() {
         drawFrame();
     }
 
-    vkDeviceWaitIdle(device);
+    device.waitIdle();
 }
 
 
@@ -390,7 +390,7 @@ void VulkanTestApplication::createGraphicsPipeline() {
 
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = reinterpret_cast<vk::DescriptorSetLayout*>(&descriptorSetLayout);
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
     pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
 
@@ -434,7 +434,7 @@ void VulkanTestApplication::createRenderPass() {
     colorAttachment.finalLayout = vk::ImageLayout::eColorAttachmentOptimal;
 
     vk::AttachmentDescription depthAttachment = {};
-    depthAttachment.format = vk::Format(findDepthFormat());
+    depthAttachment.format = findDepthFormat();
     depthAttachment.samples = vk::SampleCountFlagBits (msaaSamples);
     depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
@@ -543,9 +543,9 @@ void VulkanTestApplication::createCommandBuffers() {
         renderPassInfo.renderArea.offset = vk::Offset2D {0, 0};
         renderPassInfo.renderArea.extent = swapChainExtent;
 
-        std::array<vk::ClearValue, 2> clearValues = {};
-        clearValues[0].color = vk::ClearColorValue {std::array<float,4>{0.0f, 0.0f, 0.0f, 1.0f}};
-        clearValues[1].depthStencil = vk::ClearDepthStencilValue {1.0f, 0};
+        std::array<vk::ClearValue, 2> clearValues = {
+                vk::ClearColorValue {std::array<float,4>{0.0f, 0.0f, 0.0f, 1.0f}},
+                vk::ClearDepthStencilValue {1.0f, 0}};
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
