@@ -192,7 +192,7 @@ private:
     vk::DeviceMemory textureImageMemory;
 
     vk::ImageView textureImageView;
-    VkSampler textureSampler;
+    vk::Sampler textureSampler;
 
     vk::Image depthImage;
     vk::DeviceMemory depthImageMemory;
@@ -286,12 +286,12 @@ private:
                      vk::DeviceMemory &imageMemory);
 
     VkCommandBuffer beginSingleTimeCommands();
-    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+    void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
 
     void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout,
                                vk::ImageLayout newLayout, uint32_t mipLevels);
 
-    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+    void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
 
     void createTextureImageView();
 

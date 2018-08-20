@@ -1010,36 +1010,32 @@ VulkanTestApplication::createImage(int width, int height, uint32_t mipLevels, vk
 }
 
 VkCommandBuffer VulkanTestApplication::beginSingleTimeCommands() {
-    VkCommandBufferAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    vk::CommandBufferAllocateInfo allocInfo = {};
+    allocInfo.level = vk::CommandBufferLevel::ePrimary;
     allocInfo.commandPool = commandPool;
     allocInfo.commandBufferCount = 1;
 
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+    vk::CommandBuffer commandBuffer = device.allocateCommandBuffers(allocInfo)[0];
 
-    VkCommandBufferBeginInfo beginInfo = {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vk::CommandBufferBeginInfo beginInfo = {};
+    beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    commandBuffer.begin(beginInfo);
 
     return commandBuffer;
 }
 
-void VulkanTestApplication::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+void VulkanTestApplication::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
     vkEndCommandBuffer(commandBuffer);
 
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    vk::SubmitInfo submitInfo = {};
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    graphicsQueue.submit(submitInfo, nullptr);
     vkQueueWaitIdle(graphicsQueue);
 
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+    device.freeCommandBuffers(commandPool, commandBuffer);
 }
 
 void VulkanTestApplication::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout,
@@ -1106,34 +1102,27 @@ void VulkanTestApplication::transitionImageLayout(vk::Image image, vk::Format fo
     endSingleTimeCommands(commandBuffer);
 }
 
-void VulkanTestApplication::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+void VulkanTestApplication::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height) {
+    vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
-    VkBufferImageCopy region = {};
+    vk::BufferImageCopy region = {};
     region.bufferOffset = 0;
     region.bufferRowLength = 0;
     region.bufferImageHeight = 0;
 
-    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
     region.imageSubresource.mipLevel = 0;
     region.imageSubresource.baseArrayLayer = 0;
     region.imageSubresource.layerCount = 1;
 
-    region.imageOffset = {0, 0, 0};
-    region.imageExtent = {
+    region.imageOffset = vk::Offset3D {0, 0, 0};
+    region.imageExtent = vk::Extent3D {
             width,
             height,
             1
     };
 
-    vkCmdCopyBufferToImage(
-            commandBuffer,
-            buffer,
-            image,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            1,
-            &region
-    );
+    commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, region);
 
     endSingleTimeCommands(commandBuffer);
 }
@@ -1159,30 +1148,27 @@ vk::ImageView VulkanTestApplication::createImageView(vk::Image image, vk::Format
 }
 
 void VulkanTestApplication::createTextureSampler() {
-    VkSamplerCreateInfo samplerInfo = {};
-    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    samplerInfo.magFilter = VK_FILTER_LINEAR;
-    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    vk::SamplerCreateInfo samplerInfo = {};
+    samplerInfo.magFilter = vk::Filter::eLinear;
+    samplerInfo.minFilter = vk::Filter::eLinear;
 
-    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
+    samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
+    samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
 
     samplerInfo.anisotropyEnable = VK_TRUE;
     samplerInfo.maxAnisotropy = 16;
 
-    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.borderColor = vk::BorderColor::eIntOpaqueBlack;
 
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
 
-    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
     samplerInfo.mipLodBias = 0.0f;
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = static_cast<float>(mipLevels);
 
-    if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create texture sampler!");
-    }
+    textureSampler = device.createSampler(samplerInfo);
 }
 
 void VulkanTestApplication::createDepthResources() {
