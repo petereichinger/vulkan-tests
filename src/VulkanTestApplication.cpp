@@ -731,7 +731,7 @@ void VulkanTestApplication::recreateSwapChain() {
     createCommandBuffers();
 }
 
-void VulkanTestApplication::createBuffer(VkDeviceSize size, vk::BufferUsageFlags usage,
+void VulkanTestApplication::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
                                          vk::MemoryPropertyFlags properties, vk::Buffer &buffer,
                                          vk::DeviceMemory &bufferMemory) {
     vk::BufferCreateInfo bufferInfo = {};
@@ -959,7 +959,7 @@ VulkanTestApplication::createImage(int width, int height, uint32_t mipLevels, vk
     vkBindImageMemory(device, image, imageMemory, 0);
 }
 
-VkCommandBuffer VulkanTestApplication::beginSingleTimeCommands() {
+vk::CommandBuffer VulkanTestApplication::beginSingleTimeCommands() {
     vk::CommandBufferAllocateInfo allocInfo = {};
     allocInfo.level = vk::CommandBufferLevel::ePrimary;
     allocInfo.commandPool = commandPool;

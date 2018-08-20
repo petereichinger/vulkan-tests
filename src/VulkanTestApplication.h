@@ -262,7 +262,7 @@ private:
 
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
-    void createBuffer(VkDeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
+    void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
                       vk::Buffer &buffer,
                       vk::DeviceMemory &bufferMemory);
 
@@ -288,7 +288,7 @@ private:
                      vk::Image &image,
                      vk::DeviceMemory &imageMemory);
 
-    VkCommandBuffer beginSingleTimeCommands();
+    vk::CommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
 
     void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout,
