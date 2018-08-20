@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include "VulkanTestApplication.h"
 
-
 int main() {
     VulkanTestApplication app;
 

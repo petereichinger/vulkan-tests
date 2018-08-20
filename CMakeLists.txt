@@ -28,6 +28,6 @@ ELSE()
     add_custom_target(CompileShaders ALL
             DEPENDS shaders/triangle.vert shaders/triangle.frag)
     add_custom_command(OUTPUT shaders/triangle.vert shaders/triangle.frag
-            COMMAND ${CMAKE_SOURCE_DIR}/compile.sh)
+            COMMAND ${CMAKE_SOURCE_DIR}/compileShaders.sh)
     add_dependencies(${PROJECT_NAME} CompileShaders)
 ENDIF ()

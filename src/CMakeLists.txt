@@ -28,7 +28,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${Vulkan_INCLUDE_DIR}
     ${Vulkan_INCLUDE_DIRS}
     )
-
+#message("${Vulkan_LIBRARIES_DIR}")
+#message(${Vulkan_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}
     glfw ${GLFW_LIBRARIES}
     ${Vulkan_LIBRARIES}
@@ -39,7 +40,7 @@ target_link_libraries(${PROJECT_NAME}
 #ELSE()
 #    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
 #    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
-#            COMMAND ${SHADER_DIRECTORY}/compile.sh
+#            COMMAND ${SHADER_DIRECTORY}/compileShaders.sh
 #            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
 #ENDIF ()
 
