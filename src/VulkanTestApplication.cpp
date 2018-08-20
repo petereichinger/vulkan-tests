@@ -572,7 +572,6 @@ void VulkanTestApplication::drawFrame() {
     device.waitForFences(inFlightFences[currentFrame], VK_TRUE, 1e+9);
 
     vk::ResultValue<uint32_t> resultValue = device.acquireNextImageKHR(swapChain,1e+9, imageAvailableSemaphores[currentFrame],nullptr );
-//    VkResult result = vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
     auto result = resultValue.result;
     auto imageIndex = resultValue.value;
 
@@ -585,35 +584,31 @@ void VulkanTestApplication::drawFrame() {
 
     updateUniformBuffer(imageIndex);
 
-    VkSubmitInfo submitInfo = {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    vk::SubmitInfo submitInfo = {};
 
-    VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    vk::Semaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
+    vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = reinterpret_cast<VkCommandBuffer*>(&commandBuffers[imageIndex]);
+    submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
 
-    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+    vk::Semaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     device.resetFences(inFlightFences[currentFrame]);
 
-    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-        throw std::runtime_error("failed to submit draw command buffer!");
-    }
+    graphicsQueue.submit(submitInfo,inFlightFences[currentFrame]);
 
-    VkPresentInfoKHR presentInfo = {};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    vk::PresentInfoKHR presentInfo = {};
 
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = {swapChain};
+    vk::SwapchainKHR swapChains[] = {swapChain};
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
 
