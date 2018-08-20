@@ -21,7 +21,7 @@ add_subdirectory(glslang)
 #Set source files
 add_executable(${PROJECT_NAME}
         main.cpp
-        VulkanTestApplication.h VulkanTestApplication.cpp)
+        VulkanTestApplication.h VulkanTestApplication.cpp ShaderCompiler.cpp ShaderCompiler.h)
 
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -31,20 +31,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${Vulkan_INCLUDE_DIR}
     ${Vulkan_INCLUDE_DIRS}
     )
-#message("${Vulkan_LIBRARIES_DIR}")
-#message(${Vulkan_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}
     glfw ${GLFW_LIBRARIES}
     ${Vulkan_LIBRARIES}
+        glslang SPIRV
     )
-
-#IF (WIN32)
-#    # TODO: build shaders
-#ELSE()
-#    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
-#    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
-#            COMMAND ${SHADER_DIRECTORY}/compileShaders.sh
-#            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
-#ENDIF ()
-
-
