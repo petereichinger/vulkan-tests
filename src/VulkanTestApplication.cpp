@@ -118,44 +118,45 @@ void VulkanTestApplication::mainLoop() {
 void VulkanTestApplication::cleanup() {
     cleanupSwapChain();
 
-    vkDestroySampler(device, textureSampler, nullptr);
-    vkDestroyImageView(device, textureImageView, nullptr);
 
-    vkDestroyImage(device, textureImage, nullptr);
-    vkFreeMemory(device, textureImageMemory, nullptr);
+    device.destroy(textureSampler);
+    device.destroy(textureImageView);
 
-    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+    device.destroy(textureImage);
+    device.free(textureImageMemory);
 
-    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+    device.destroy(descriptorPool);
+
+    device.destroy(descriptorSetLayout);
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
-        vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-        vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+        device.destroy( uniformBuffers[i]);
+        device.free(uniformBuffersMemory[i]);
     }
 
-    vkDestroyBuffer(device, indexBuffer, nullptr);
-    vkFreeMemory(device, indexBufferMemory, nullptr);
+    device.destroy(indexBuffer);
+    device.free(indexBufferMemory);
 
 
-    vkDestroyBuffer(device, vertexBuffer, nullptr);
-    vkFreeMemory(device, vertexBufferMemory, nullptr);
+    device.destroy( vertexBuffer);
+    device.free( vertexBufferMemory);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(device, inFlightFences[i], nullptr);
+        device.destroy(renderFinishedSemaphores[i]);
+        device.destroy(imageAvailableSemaphores[i]);
+        device.destroy(inFlightFences[i]);
     }
 
-    vkDestroyCommandPool(device, commandPool, nullptr);
+    device.destroy(commandPool);
 
-    vkDestroyDevice(device, nullptr);
+    device.destroy();
 
     if (enableValidationLayers) {
         DestroyDebugReportCallbackEXT(instance, callback, nullptr);
     }
 
-    vkDestroySurfaceKHR(instance, surface, nullptr);
-    vkDestroyInstance(instance, nullptr);
+    instance.destroy(surface);
+    instance.destroy();
 
     glfwDestroyWindow(window);
 
@@ -171,12 +172,8 @@ void VulkanTestApplication::createSurface() {
     surface = cSurface;
 }
 
-bool VulkanTestApplication::checkDeviceExtensionSupport(VkPhysicalDevice const &device) {
-    uint32_t extensionCount;
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+bool VulkanTestApplication::checkDeviceExtensionSupport(const vk::PhysicalDevice &device) {
+    std::vector<vk::ExtensionProperties> availableExtensions = device.enumerateDeviceExtensionProperties();
 
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
@@ -419,17 +416,10 @@ void VulkanTestApplication::createGraphicsPipeline() {
 }
 
 VkShaderModule VulkanTestApplication::createShaderModule(const std::vector<char> &code) {
-    VkShaderModuleCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    vk::ShaderModuleCreateInfo createInfo = {};
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
-
-    VkShaderModule shaderModule;
-    if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create shader module!");
-    }
-
-    return shaderModule;
+    return device.createShaderModule(createInfo);
 }
 
 void VulkanTestApplication::createRenderPass() {
@@ -521,7 +511,6 @@ void VulkanTestApplication::createFramebuffers() {
         framebufferInfo.layers = 1;
 
         swapChainFramebuffers[i] = device.createFramebuffer(framebufferInfo);
-
     }
 }
 

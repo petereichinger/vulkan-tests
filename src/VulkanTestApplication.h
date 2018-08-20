@@ -226,7 +226,7 @@ private:
 
     void createSurface();
 
-    bool checkDeviceExtensionSupport(VkPhysicalDevice const &device);
+    bool checkDeviceExtensionSupport(const vk::PhysicalDevice &device);
 
     SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
 
