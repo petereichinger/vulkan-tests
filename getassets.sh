@@ -4,10 +4,10 @@ mkdir textures 2>/dev/null
 mkdir meshes 2>/dev/null
 
 function getTexture {
-    if [ ! -f $1 ]; then
+    #if [ ! -f $1 ]; then
         echo "Getting $1 from $2"
         wget -4 -O $1 $2 > /dev/null
-    fi
+    #fi
 }
 
 getTexture textures/texture.jpg https://vulkan-tutorial.com/images/texture.jpg

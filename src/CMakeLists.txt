@@ -34,13 +34,13 @@ target_link_libraries(${PROJECT_NAME}
     ${Vulkan_LIBRARIES}
     )
 
-IF (WIN32)
-    # TODO: build shaders
-ELSE()
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
-    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
-            COMMAND ${SHADER_DIRECTORY}/compile.sh
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
-ENDIF ()
+#IF (WIN32)
+#    # TODO: build shaders
+#ELSE()
+#    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
+#    add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
+#            COMMAND ${SHADER_DIRECTORY}/compile.sh
+#            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/shaders)
+#ENDIF ()
 
 

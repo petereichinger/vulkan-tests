@@ -24,4 +24,10 @@ ELSE()
             COMMAND ${CMAKE_SOURCE_DIR}/getassets.sh
             )
     add_dependencies(${PROJECT_NAME} GetAssets)
+
+    add_custom_target(CompileShaders ALL
+            DEPENDS shaders/triangle.vert shaders/triangle.frag)
+    add_custom_command(OUTPUT shaders/triangle.vert shaders/triangle.frag
+            COMMAND ${CMAKE_SOURCE_DIR}/compile.sh)
+    add_dependencies(${PROJECT_NAME} CompileShaders)
 ENDIF ()
