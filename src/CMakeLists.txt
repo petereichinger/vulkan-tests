@@ -21,7 +21,7 @@ add_subdirectory(glslang)
 #Set source files
 add_executable(${PROJECT_NAME}
         main.cpp
-        VulkanTestApplication.h VulkanTestApplication.cpp ShaderCompiler.cpp ShaderCompiler.h)
+        VulkanTestApplication.h VulkanTestApplication.cpp ShaderCompiler.cpp ShaderCompiler.h FileHelpers.h FileHelpers.cpp)
 
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC

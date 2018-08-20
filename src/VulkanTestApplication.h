@@ -23,8 +23,7 @@
 #include <chrono>
 
 #include <array>
-
-
+#include "ShaderCompiler.h"
 
 
 
@@ -127,6 +126,11 @@ private:
 #else
     const bool enableValidationLayers = true;
 #endif
+
+    //Shader compiler
+
+
+    ShaderCompiler compiler;
 
 
     // Window to render to

@@ -12,7 +12,7 @@
 #include <set>
 #include <fstream>
 #include <unordered_map>
-
+#include "FileHelpers.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -46,22 +46,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     return VK_FALSE;
 }
 
-static std::vector<char> readFile(const std::string &filename) {
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
-    if (!file.is_open()) {
-        throw std::runtime_error("failed to open file!");
-    }
-
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> buffer(fileSize);
-
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-    file.close();
-
-    return buffer;
-}
 
 static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
     auto app = reinterpret_cast<VulkanTestApplication*>(glfwGetWindowUserPointer(window));
@@ -77,6 +62,7 @@ static void quitCallback(GLFWwindow* window, int key, int scancode, int action, 
 
 
 void VulkanTestApplication::run() {
+
     initWindow();
     initVulkan();
     mainLoop();
