@@ -902,7 +902,7 @@ void VulkanTestApplication::createVertexBuffer() {
 
     void* data = device.mapMemory(stagingBufferMemory,0,bufferSize);
     memcpy(data, vertices.data(), (size_t) bufferSize);
-    vkUnmapMemory(device, stagingBufferMemory);
+    device.unmapMemory(stagingBufferMemory);
 
     createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, vertexBuffer, vertexBufferMemory);
 
@@ -1160,8 +1160,8 @@ void VulkanTestApplication::createTextureImage() {
 
     generateMipmaps(textureImage, vk::Format::eR8G8B8A8Unorm, texWidth, texHeight, mipLevels);
 
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
+    device.destroy(stagingBuffer);
+    device.free(stagingBufferMemory);
 }
 
 void
@@ -1195,7 +1195,7 @@ VulkanTestApplication::createImage(int width, int height, uint32_t mipLevels, vk
 
     imageMemory = device.allocateMemory(allocInfo);
 
-    vkBindImageMemory(device, image, imageMemory, 0);
+    device.bindImageMemory(image,imageMemory, 0);
 }
 
 vk::CommandBuffer VulkanTestApplication::beginSingleTimeCommands() {
@@ -1361,7 +1361,7 @@ void VulkanTestApplication::createTextureSampler() {
 }
 
 void VulkanTestApplication::createDepthResources() {
-    vk::Format depthFormat = vk::Format(findDepthFormat());
+    vk::Format depthFormat = findDepthFormat();
 
     createImage(swapChainExtent.width, swapChainExtent.height, 1, msaaSamples, depthFormat,
             vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eDepthStencilAttachment,
