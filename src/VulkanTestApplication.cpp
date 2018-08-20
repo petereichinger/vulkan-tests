@@ -677,7 +677,7 @@ uint32_t VulkanTestApplication::findMemoryType(uint32_t typeFilter, vk::MemoryPr
     vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if (typeFilter & (1 << i)&& (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+        if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
             return i;
         }
     }
@@ -686,7 +686,7 @@ uint32_t VulkanTestApplication::findMemoryType(uint32_t typeFilter, vk::MemoryPr
 }
 
 void VulkanTestApplication::createVertexBuffer() {
-    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
     vk::Buffer stagingBuffer;
     vk::DeviceMemory stagingBufferMemory;
@@ -704,12 +704,12 @@ void VulkanTestApplication::createVertexBuffer() {
     device.free(stagingBufferMemory);
 }
 
-void VulkanTestApplication::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-    VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+void VulkanTestApplication::copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
+    vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
-    VkBufferCopy copyRegion = {};
+    vk::BufferCopy copyRegion = {};
     copyRegion.size = size;
-    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+    commandBuffer.copyBuffer(srcBuffer, dstBuffer, copyRegion);
 
     endSingleTimeCommands(commandBuffer);
 }
@@ -747,8 +747,6 @@ void VulkanTestApplication::recreateSwapChain() {
         glfwGetFramebufferSize(window, &width, &height);
         glfwWaitEvents();
     }
-
-
 
     vkDeviceWaitIdle(device);
 
@@ -798,7 +796,7 @@ void VulkanTestApplication::createIndexBuffer() {
     memcpy(data, indices.data(), (size_t) bufferSize);
     device.unmapMemory(stagingBufferMemory);
 
-    createBuffer(bufferSize,vk::BufferUsageFlagBits::eTransferDst| vk::BufferUsageFlagBits::eIndexBuffer,
+    createBuffer(bufferSize,vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
             vk::MemoryPropertyFlagBits::eDeviceLocal, indexBuffer, indexBufferMemory);
 
     copyBuffer(stagingBuffer, indexBuffer, bufferSize);

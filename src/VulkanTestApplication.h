@@ -266,7 +266,7 @@ private:
                       vk::Buffer &buffer,
                       vk::DeviceMemory &bufferMemory);
 
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 
     void createIndexBuffer();
 
