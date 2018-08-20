@@ -19,18 +19,18 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
-
-
-VkResult CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo,
-                                      const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback) {
-    auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
-    if (func != nullptr) {
-        return func(instance, pCreateInfo, pAllocator, pCallback);
-    } else {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
+vk::Result CreateDebugReportCallback(vk::Instance instance, vk::Device device,
+                                     const VkDebugReportCallbackCreateInfoEXT &createInfo,
+                                     VkDebugReportCallbackEXT *callback) {
+    vk::DispatchLoaderDynamic dildy(instance, device);
+    return vk::Result(dildy.vkCreateDebugReportCallbackEXT(instance, &createInfo, nullptr, callback));
 }
 
+void DestroyDebugReportCallback(vk::Instance instance, vk::Device device, VkDebugReportCallbackEXT callback) {
+    vk::DispatchLoaderDynamic dildy(instance, device);
+
+    dildy.vkDestroyDebugReportCallbackEXT(instance, callback, nullptr);
+}
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugReportFlagsEXT flags,
         VkDebugReportObjectTypeEXT objType,
@@ -44,15 +44,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     std::cerr << "validation layer: " << msg << std::endl;
 
     return VK_FALSE;
-}
-
-void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback,
-                                   const VkAllocationCallbacks *pAllocator) {
-    auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(instance,
-                                                                            "vkDestroyDebugReportCallbackEXT");
-    if (func != nullptr) {
-        func(instance, callback, pAllocator);
-    }
 }
 
 static std::vector<char> readFile(const std::string &filename) {
@@ -181,10 +172,7 @@ std::vector<const char *> VulkanTestApplication::getRequiredExtensions() {
     }
 
     // Check if Vulkan supports all extensions required by GLFW
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    std::vector<VkExtensionProperties> supportedExtensions(extensionCount);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, supportedExtensions.data());
+    std::vector<vk::ExtensionProperties> supportedExtensions = vk::enumerateInstanceExtensionProperties();
 
     for (auto i = 0; i < extensions.size(); ++i) {
         auto found = std::find_if(supportedExtensions.begin(), supportedExtensions.end(),
@@ -202,12 +190,7 @@ std::vector<const char *> VulkanTestApplication::getRequiredExtensions() {
 }
 
 bool VulkanTestApplication::checkValidationLayerSupport() {
-    uint32_t layerCount;
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-    std::vector<VkLayerProperties> availableLayers(layerCount);
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
+    std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
 
     for (const char *layerName : validationLayers) {
         bool layerFound = false;
@@ -230,7 +213,6 @@ bool VulkanTestApplication::checkValidationLayerSupport() {
 
 void VulkanTestApplication::cleanup() {
     cleanupSwapChain();
-
 
     device.destroy(textureSampler);
     device.destroy(textureImageView);
@@ -265,7 +247,7 @@ void VulkanTestApplication::cleanup() {
     device.destroy();
 
     if (enableValidationLayers) {
-        DestroyDebugReportCallbackEXT(instance, callback, nullptr);
+        DestroyDebugReportCallback(instance, device, callback);
     }
 
     instance.destroy(surface);
@@ -286,7 +268,7 @@ void VulkanTestApplication::setupDebugCallback() {
     createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
     createInfo.pfnCallback = debugCallback;
 
-    if (CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback) != VK_SUCCESS) {
+    if (CreateDebugReportCallback(instance, device, createInfo, &callback) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to set up debug callback!");
     }
 }
@@ -309,17 +291,12 @@ void VulkanTestApplication::pickPhysicalDevice() {
     std::cout << "Using " << physicalDevice.getProperties().deviceName <<std::endl;
 }
 
-bool VulkanTestApplication::isDeviceSuitable(VkPhysicalDevice const &device) {
+bool VulkanTestApplication::isDeviceSuitable(const vk::PhysicalDevice &device) {
     // Can query properties and features of the physical device
-    VkPhysicalDeviceProperties deviceProperties;
-    VkPhysicalDeviceFeatures deviceFeatures;
-    vkGetPhysicalDeviceProperties(device, &deviceProperties);
-    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
     QueueFamilyIndices indices = findQueueFamilies(device);
 
     bool extensionsSupported = checkDeviceExtensionSupport(device);
-
 
     bool swapChainAdequate = false;
     if (extensionsSupported) {
@@ -327,10 +304,9 @@ bool VulkanTestApplication::isDeviceSuitable(VkPhysicalDevice const &device) {
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
-    VkPhysicalDeviceFeatures supportedFeatures;
-    vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+    vk::PhysicalDeviceFeatures deviceFeatures = device.getFeatures();
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    return indices.isComplete() && extensionsSupported && swapChainAdequate && deviceFeatures.samplerAnisotropy;
 }
 
 QueueFamilyIndices VulkanTestApplication::findQueueFamilies(vk::PhysicalDevice device) {
@@ -924,30 +900,30 @@ void VulkanTestApplication::copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffe
 
 
 void VulkanTestApplication::cleanupSwapChain() {
-    vkDestroyImageView(device, colorImageView, nullptr);
-    vkDestroyImage(device, colorImage, nullptr);
-    vkFreeMemory(device, colorImageMemory, nullptr);
+    device.destroy(colorImageView);
+    device.destroy(colorImage);
+    device.free(colorImageMemory);
 
-    vkDestroyImageView(device, depthImageView, nullptr);
-    vkDestroyImage(device, depthImage, nullptr);
-    vkFreeMemory(device, depthImageMemory, nullptr);
+    device.destroy(depthImageView);
+    device.destroy(depthImage);
+    device.free(depthImageMemory);
 
 
     for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
-        vkDestroyFramebuffer(device, swapChainFramebuffers[i], nullptr);
+        device.destroy( swapChainFramebuffers[i]);
     }
 
     device.freeCommandBuffers(commandPool, commandBuffers);
-    
-    vkDestroyPipeline(device, graphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-    vkDestroyRenderPass(device, renderPass, nullptr);
+
+    device.destroy(graphicsPipeline);
+    device.destroy(pipelineLayout);
+    device.destroy(renderPass);
 
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-        vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+        device.destroy( swapChainImageViews[i]);
     }
 
-    vkDestroySwapchainKHR(device, swapChain, nullptr);
+    device.destroy(swapChain);
 }
 void VulkanTestApplication::recreateSwapChain() {
     int width = 0, height = 0;
@@ -956,7 +932,7 @@ void VulkanTestApplication::recreateSwapChain() {
         glfwWaitEvents();
     }
 
-    vkDeviceWaitIdle(device);
+    device.waitIdle();
 
     cleanupSwapChain();
 
@@ -1154,9 +1130,6 @@ void VulkanTestApplication::createTextureImage() {
                           vk::ImageLayout::eUndefined,
                           vk::ImageLayout::eTransferDstOptimal, mipLevels);
     copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-//    transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM,
-//                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-//                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 
     generateMipmaps(textureImage, vk::Format::eR8G8B8A8Unorm, texWidth, texHeight, mipLevels);
 
@@ -1215,14 +1188,14 @@ vk::CommandBuffer VulkanTestApplication::beginSingleTimeCommands() {
 }
 
 void VulkanTestApplication::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
-    vkEndCommandBuffer(commandBuffer);
+    commandBuffer.end();
 
     vk::SubmitInfo submitInfo = {};
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
     graphicsQueue.submit(submitInfo, nullptr);
-    vkQueueWaitIdle(graphicsQueue);
+    graphicsQueue.waitIdle();
 
     device.freeCommandBuffers(commandPool, commandBuffer);
 }

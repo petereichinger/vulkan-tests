@@ -218,7 +218,7 @@ private:
 
     void pickPhysicalDevice();
 
-    bool isDeviceSuitable(VkPhysicalDevice const &pT);
+    bool isDeviceSuitable(const vk::PhysicalDevice &pT);
 
     QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device);
 
