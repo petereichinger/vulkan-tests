@@ -16,6 +16,8 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(glfw)
 
+add_subdirectory(glslang)
+
 #Set source files
 add_executable(${PROJECT_NAME}
         main.cpp
@@ -24,6 +26,7 @@ add_executable(${PROJECT_NAME}
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC
     glfw/include
+    glm
     external
     ${Vulkan_INCLUDE_DIR}
     ${Vulkan_INCLUDE_DIRS}
