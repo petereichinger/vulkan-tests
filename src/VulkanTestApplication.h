@@ -164,7 +164,7 @@ private:
     // layout of the pipeline (number of uniforms and push values)
     vk::PipelineLayout pipelineLayout;
 
-    std::vector<VkFramebuffer> swapChainFramebuffers;
+    std::vector<vk::Framebuffer> swapChainFramebuffers;
 
     VkCommandPool commandPool;
 
