@@ -309,8 +309,8 @@ private:
 
     void loadModel();
 
-    void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight,
-                             uint32_t mipLevels);
+    void generateMipmaps(vk::Image image, vk::Format imageFormat, int32_t texWidth, int32_t texHeight,
+                         uint32_t mipLevels);
 
     vk::SampleCountFlagBits getMaxUsableSampleCount();
 
