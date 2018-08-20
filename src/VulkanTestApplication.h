@@ -242,7 +242,7 @@ private:
 
     void createGraphicsPipeline();
 
-    VkShaderModule createShaderModule(const std::vector<char>& code);
+    vk::ShaderModule createShaderModule(const std::vector<char> &code);
 
     void createFramebuffers();
 

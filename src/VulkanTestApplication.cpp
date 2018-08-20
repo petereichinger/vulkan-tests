@@ -415,7 +415,7 @@ void VulkanTestApplication::createGraphicsPipeline() {
     device.destroy(vertShaderModule);
 }
 
-VkShaderModule VulkanTestApplication::createShaderModule(const std::vector<char> &code) {
+vk::ShaderModule VulkanTestApplication::createShaderModule(const std::vector<char> &code) {
     vk::ShaderModuleCreateInfo createInfo = {};
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
