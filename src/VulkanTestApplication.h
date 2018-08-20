@@ -168,7 +168,7 @@ private:
 
     VkCommandPool commandPool;
 
-    std::vector<VkCommandBuffer> commandBuffers;
+    std::vector<vk::CommandBuffer> commandBuffers;
 
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -186,8 +186,8 @@ private:
 
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
-    VkDescriptorPool descriptorPool;
-    std::vector<VkDescriptorSet> descriptorSets;
+    vk::DescriptorPool descriptorPool;
+    std::vector<vk::DescriptorSet> descriptorSets;
 
     uint32_t mipLevels;
     vk::Image textureImage;
