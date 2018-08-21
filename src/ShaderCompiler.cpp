@@ -5,9 +5,8 @@
 #include "ShaderCompiler.h"
 #include "FileHelpers.h"
 #include <iostream>
-ShaderCompiler::ShaderCompiler() {
-    glslang::InitializeProcess();
-}
+
+bool ShaderCompiler::m_glslangInitialized;
 
 std::vector<char> ShaderCompiler::loadShader(const std::string &fileName) {
     auto fileContentsVector = readFile(fileName);
@@ -39,5 +38,4 @@ EShLanguage ShaderCompiler::determineShaderStage(const std::string &fileName) {
     if (extension == ".tese") return EShLangTessEvaluation;
 
     throw std::runtime_error("Invalid extension for shader " + fileName);
-    std::cout << extension;
 }

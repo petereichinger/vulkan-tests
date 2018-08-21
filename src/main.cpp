@@ -6,11 +6,10 @@
 #include "ShaderCompiler.h"
 int main() {
     VulkanTestApplication app;
+    ShaderCompiler sc;
 
     try {
-        ShaderCompiler sc;
-
-        sc.loadShader("shaders/frag.spv");
+        sc.loadShader("shaders/triangle.vert");
         app.run();
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
