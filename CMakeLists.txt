@@ -25,9 +25,14 @@ ELSE()
             )
     add_dependencies(${PROJECT_NAME} GetAssets)
 
-    add_custom_target(CompileShaders ALL
-            DEPENDS shaders/triangle.vert shaders/triangle.frag)
-    add_custom_command(OUTPUT shaders/triangle.vert shaders/triangle.frag
-            COMMAND ${CMAKE_SOURCE_DIR}/compileShaders.sh)
-    add_dependencies(${PROJECT_NAME} CompileShaders)
+#    add_custom_target(CompileShaders ALL
+#            DEPENDS shaders/triangle.vert shaders/triangle.frag)
+#    add_custom_command(OUTPUT shaders/triangle.vert shaders/triangle.frag
+#            COMMAND ${CMAKE_SOURCE_DIR}/compileShaders.sh)
+#    add_dependencies(${PROJECT_NAME} CompileShaders)
+    add_custom_target(CopyShaders ALL)
+    add_dependencies(${PROJECT_NAME} CopyShaders)
+    add_custom_command(TARGET CopyShaders POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/shaders ${CMAKE_BINARY_DIR}/shaders)
 ENDIF ()
