@@ -23,7 +23,7 @@
 #include <chrono>
 
 #include <array>
-#include "ShaderCompiler.h"
+#include "shader-loader/ShaderLoader.h"
 
 
 
@@ -130,7 +130,7 @@ private:
     //Shader compiler
 
 
-    ShaderCompiler compiler;
+    ShaderLoader compiler;
 
 
     // Window to render to
@@ -246,7 +246,7 @@ private:
 
     void createGraphicsPipeline();
 
-    vk::ShaderModule createShaderModule(const std::vector<char> &code);
+    vk::ShaderModule createShaderModule(const std::vector<uint32_t> &code);
 
     void createFramebuffers();
 

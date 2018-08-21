@@ -62,7 +62,6 @@ static void quitCallback(GLFWwindow* window, int key, int scancode, int action, 
 
 
 void VulkanTestApplication::run() {
-
     initWindow();
     initVulkan();
     mainLoop();
@@ -500,8 +499,8 @@ void VulkanTestApplication::createImageViews() {
 }
 
 void VulkanTestApplication::createGraphicsPipeline() {
-    auto vertShaderCode = readFile("shaders/vert.spv");
-    auto fragShaderCode = readFile("shaders/frag.spv");
+    auto vertShaderCode = compiler.loadShader("shaders/triangle.vert");
+    auto fragShaderCode = compiler.loadShader("shaders/triangle.frag");
 
     vk::ShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     vk::ShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -616,17 +615,17 @@ void VulkanTestApplication::createGraphicsPipeline() {
     device.destroy(vertShaderModule);
 }
 
-vk::ShaderModule VulkanTestApplication::createShaderModule(const std::vector<char> &code) {
+vk::ShaderModule VulkanTestApplication::createShaderModule(const std::vector<uint32_t> &code) {
     vk::ShaderModuleCreateInfo createInfo = {};
-    createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+    createInfo.codeSize = code.size() * 4;
+    createInfo.pCode = code.data();
     return device.createShaderModule(createInfo);
 }
 
 void VulkanTestApplication::createRenderPass() {
     vk::AttachmentDescription colorAttachment = {};
     colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = vk::SampleCountFlagBits (msaaSamples);
+    colorAttachment.samples = msaaSamples;
     colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
     colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
@@ -636,7 +635,7 @@ void VulkanTestApplication::createRenderPass() {
 
     vk::AttachmentDescription depthAttachment = {};
     depthAttachment.format = findDepthFormat();
-    depthAttachment.samples = vk::SampleCountFlagBits (msaaSamples);
+    depthAttachment.samples = msaaSamples;
     depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
     depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
     depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
@@ -733,10 +732,13 @@ void VulkanTestApplication::createCommandBuffers() {
     commandBuffers = device.allocateCommandBuffers(allocInfo);
 
     for (size_t i = 0; i < commandBuffers.size(); i++) {
+        
         vk::CommandBufferBeginInfo beginInfo = {};
         beginInfo.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
 
-        commandBuffers[i].begin(beginInfo);
+        auto commandBuffer = commandBuffers[i];
+
+        commandBuffer.begin(beginInfo);
 
         vk::RenderPassBeginInfo renderPassInfo = {};
         renderPassInfo.renderPass = renderPass;
@@ -751,21 +753,22 @@ void VulkanTestApplication::createCommandBuffers() {
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
 
-        commandBuffers[i].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-        commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics,graphicsPipeline);
+        commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
+        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
         std::array<vk::Buffer,1> vertexBuffers {vertexBuffer};
         std::array<vk::DeviceSize,1> offsets = {0};
-        commandBuffers[i].bindVertexBuffers(0,vertexBuffers,offsets);
-        commandBuffers[i].bindIndexBuffer(indexBuffer,0, vk::IndexType::eUint32);
+        commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
+        commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
 
-        commandBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0,descriptorSets[i], nullptr);
-        commandBuffers[i].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets[i], nullptr);
+commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
-        commandBuffers[i].endRenderPass();
+        commandBuffer.endRenderPass();
 
-        commandBuffers[i].end();
+        commandBuffer.end();
     }
 }
 

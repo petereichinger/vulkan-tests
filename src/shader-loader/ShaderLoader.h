@@ -8,19 +8,19 @@
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
 #include <iostream>
+//#include <experimental/filesystem>
 
-class ShaderCompiler {
+class ShaderLoader {
 private:
     static bool m_glslangInitialized;
     EShLanguage determineShaderStage(const std::string& fileName);
 public:
-    ShaderCompiler() {
+    ShaderLoader() {
         if (!m_glslangInitialized) {
             glslang::InitializeProcess();
             m_glslangInitialized = true;
-            std::cout << "INIT" << std::endl;
         }
     }
 
-    std::vector<char> loadShader(const std::string& fileName);
+    std::vector<unsigned int> loadShader(const std::string &fileName);
 };
