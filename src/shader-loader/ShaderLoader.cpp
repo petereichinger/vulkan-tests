@@ -3,7 +3,7 @@
 //
 
 #include "ShaderLoader.h"
-#include "FileHelpers.h"
+#include "file-utils/FileHelpers.h"
 #include <iostream>
 #include <sstream>
 #include <tuple>

@@ -23,8 +23,7 @@
 #include <chrono>
 
 #include <array>
-#include "shader-loader/ShaderLoader.h"
-
+#include "shader-loader/ShaderUpdater.h"
 
 
 struct QueueFamilyIndices {
@@ -130,10 +129,7 @@ private:
 #endif
 
     //Shader compiler
-
-
-    ShaderLoader compiler;
-
+    ShaderUpdater updater;
 
     // Window to render to
     GLFWwindow* window;
@@ -332,9 +328,9 @@ private:
 
     void reloadShaders();
 
-    bool compileShaders();
-
     void getSwapChainImageCount();
 
     void buildSwapChain();
+
+    bool initShaders();
 };

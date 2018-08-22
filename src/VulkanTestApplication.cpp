@@ -12,7 +12,7 @@
 #include <set>
 #include <fstream>
 #include <unordered_map>
-#include "FileHelpers.h"
+#include "file-utils/FileHelpers.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -115,7 +115,7 @@ void VulkanTestApplication::initVulkan() {
     createDescriptorSets();
     createSyncObjects();
 
-    if (!compileShaders()) {
+    if (!initShaders()) {
         throw std::runtime_error("Error while compiling shaders initially, exiting.");
     }
 
@@ -155,22 +155,14 @@ void VulkanTestApplication::createInstance() {
 
 void VulkanTestApplication::mainLoop() {
 
-    std::map<std::string, long> fileWriteTimes;
-
-    fileWriteTimes["shaders/triangle.vert"] = getFileWriteTime("shaders/triangle.vert");
-    fileWriteTimes["shaders/triangle.frag"] = getFileWriteTime("shaders/triangle.frag");
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        for(auto& file : fileWriteTimes) {
-            long newTime = getFileWriteTime(file.first);
-
-            if (newTime > file.second) {
-                m_reloadShaders = true;
-                file.second = newTime;
-            }
+        if (updater.checkForModifications()) {
+            vertCode = updater.getShaderCode("shaders/triangle.vert");
+            fragCode = updater.getShaderCode("shaders/triangle.frag");
+            m_reloadShaders = true;
         }
-
 
         if (m_reloadShaders) {
             reloadShaders();
@@ -543,27 +535,10 @@ void VulkanTestApplication::createImageViews() {
     }
 }
 
-bool VulkanTestApplication::compileShaders() {
-    bool vertSuccess, fragSuccess;
-    std::vector<unsigned int> newVertCode, newFragCode;
-
-    std::tie(vertSuccess, newVertCode) = compiler.loadShader("shaders/triangle.vert");
-    std::tie(fragSuccess, newFragCode) = compiler.loadShader("shaders/triangle.frag");
-
-
-    if (vertSuccess && fragSuccess) {
-        vertCode = newVertCode;
-        fragCode = newFragCode;
-        return true;
-    }
-
-    return false;
-}
-
 void VulkanTestApplication::createGraphicsPipeline() {
 
-    vk::ShaderModule vertShaderModule = createShaderModule(vertCode);
-    vk::ShaderModule fragShaderModule = createShaderModule(fragCode);
+    vk::ShaderModule vertShaderModule = createShaderModule(updater.getShaderCode("shaders/triangle.vert"));
+    vk::ShaderModule fragShaderModule = createShaderModule(updater.getShaderCode("shaders/triangle.frag"));
 
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo = {};
     vertShaderStageInfo.stage = vk::ShaderStageFlagBits::eVertex;
@@ -1572,12 +1547,6 @@ void VulkanTestApplication::createColorResources() {
 }
 
 void VulkanTestApplication::reloadShaders() {
-    if (!compileShaders()) {
-        std::cout << "Error while compiling shaders" <<std::endl;
-    } else {
-        std::cout << "New shaders" << std::endl;
-    }
-
     graphicsQueue.waitIdle();
 
     device.destroy(pipelineLayout);
@@ -1599,4 +1568,11 @@ void VulkanTestApplication::buildSwapChain() {
     createDepthResources();
     createFramebuffers();
     createCommandBuffers();
+}
+
+bool VulkanTestApplication::initShaders() {
+    bool success=  updater.registerShader("shaders/triangle.frag");
+    success |= updater.registerShader("shaders/triangle.vert");
+
+    return success;
 }

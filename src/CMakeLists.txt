@@ -19,7 +19,7 @@ add_subdirectory(glfw)
 add_subdirectory(glslang)
 
 #Set source files
-add_executable(${PROJECT_NAME} file-watcher/FileWatcher.cpp file-watcher/FileWatcher.h)
+add_executable(${PROJECT_NAME} file-utils/FileWatcher.cpp file-utils/FileWatcher.h shader-loader/ShaderUpdater.cpp shader-loader/ShaderUpdater.h)
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        CMAKE_CXX_STANDARD 17
@@ -29,7 +29,7 @@ add_executable(${PROJECT_NAME} file-watcher/FileWatcher.cpp file-watcher/FileWat
 
 target_sources(${PROJECT_NAME} PUBLIC main.cpp
         VulkanTestApplication.h VulkanTestApplication.cpp
-        FileHelpers.h FileHelpers.cpp
+        file-utils/FileHelpers.h file-utils/FileHelpers.cpp
         shader-loader/ShaderLoader.cpp shader-loader/ShaderLoader.h)
 
 message("${CMAKE_SOURCE_DIR}")
