@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <tuple>
+
 bool ShaderLoader::m_glslangInitialized;
 
 const TBuiltInResource DefaultTBuiltInResource = {

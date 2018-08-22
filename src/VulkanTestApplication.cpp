@@ -155,8 +155,22 @@ void VulkanTestApplication::createInstance() {
 
 void VulkanTestApplication::mainLoop() {
 
+    std::map<std::string, long> fileWriteTimes;
+
+    fileWriteTimes["shaders/triangle.vert"] = getFileWriteTime("shaders/triangle.vert");
+    fileWriteTimes["shaders/triangle.frag"] = getFileWriteTime("shaders/triangle.frag");
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        for(auto& file : fileWriteTimes) {
+            long newTime = getFileWriteTime(file.first);
+
+            if (newTime > file.second) {
+                m_reloadShaders = true;
+                file.second = newTime;
+            }
+        }
+
 
         if (m_reloadShaders) {
             reloadShaders();
@@ -1558,6 +1572,12 @@ void VulkanTestApplication::createColorResources() {
 }
 
 void VulkanTestApplication::reloadShaders() {
+    if (!compileShaders()) {
+        std::cout << "Error while compiling shaders" <<std::endl;
+    } else {
+        std::cout << "New shaders" << std::endl;
+    }
+
     graphicsQueue.waitIdle();
 
     device.destroy(pipelineLayout);

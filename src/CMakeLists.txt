@@ -19,7 +19,7 @@ add_subdirectory(glfw)
 add_subdirectory(glslang)
 
 #Set source files
-add_executable(${PROJECT_NAME})
+add_executable(${PROJECT_NAME} file-watcher/FileWatcher.cpp file-watcher/FileWatcher.h)
 
 #set_target_properties(${PROJECT_NAME} PROPERTIES
 #        CMAKE_CXX_STANDARD 17

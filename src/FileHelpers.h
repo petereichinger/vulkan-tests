@@ -8,3 +8,4 @@
 #include <fstream>
 
 std::vector<char> readFile(const std::string &filename);
+long getFileWriteTime(const std::string& fileName);
