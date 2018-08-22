@@ -8,7 +8,7 @@
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
 #include <iostream>
-//#include <experimental/filesystem>
+#include <tuple>
 
 class ShaderLoader {
 private:
@@ -22,5 +22,5 @@ public:
         }
     }
 
-    std::vector<unsigned int> loadShader(const std::string &fileName);
+    std::tuple<bool, std::vector<unsigned int>> loadShader(const std::string &fileName);
 };

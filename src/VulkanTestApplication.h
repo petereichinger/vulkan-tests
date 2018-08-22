@@ -103,9 +103,11 @@ struct UniformBufferObject {
 class VulkanTestApplication {
 public:
     void run();
-    bool framebufferResized = false;
-
+    void requestFramebufferResize();
+    void requestShaderReload();
 private:
+    bool m_framebufferResized = false;
+    bool m_reloadShaders = false;
     const std::string applicationName= "VulkanTest";
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
@@ -170,6 +172,9 @@ private:
 
     std::vector<vk::Framebuffer> swapChainFramebuffers;
 
+    std::vector<unsigned int> vertCode;
+    std::vector<unsigned int> fragCode;
+
     VkCommandPool commandPool;
 
     std::vector<vk::CommandBuffer> commandBuffers;
@@ -231,6 +236,8 @@ private:
     void createSurface();
 
     bool checkDeviceExtensionSupport(const vk::PhysicalDevice &device);
+
+    int swapChainImageCount;
 
     SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
 
@@ -322,4 +329,12 @@ private:
     vk::SampleCountFlagBits getMaxUsableSampleCount();
 
     void createColorResources() ;
+
+    void reloadShaders();
+
+    bool compileShaders();
+
+    void getSwapChainImageCount();
+
+    void buildSwapChain();
 };

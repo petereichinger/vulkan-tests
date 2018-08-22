@@ -50,12 +50,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 
 static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
     auto app = reinterpret_cast<VulkanTestApplication*>(glfwGetWindowUserPointer(window));
-    app->framebufferResized = true;
+    app->requestFramebufferResize();
 }
 
 static void quitCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action != GLFW_RELEASE) {
+        return;
+    }
     if (key == GLFW_KEY_ESCAPE) {
         glfwSetWindowShouldClose(window, true);
+    }
+    if (key == GLFW_KEY_R) {
+        auto app = reinterpret_cast<VulkanTestApplication*>(glfwGetWindowUserPointer(window));
+        app->requestShaderReload();
     }
 }
 
@@ -66,6 +73,14 @@ void VulkanTestApplication::run() {
     initVulkan();
     mainLoop();
     cleanup();
+}
+
+void VulkanTestApplication::requestFramebufferResize() {
+    m_framebufferResized = true;
+}
+
+void VulkanTestApplication::requestShaderReload() {
+    m_reloadShaders = true;
 }
 
 void VulkanTestApplication::initWindow() {
@@ -83,26 +98,28 @@ void VulkanTestApplication::initVulkan() {
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
-    createSwapChain();
-    createImageViews();
-    createRenderPass();
+
     createDescriptorSetLayout();
-    createGraphicsPipeline();
+
     createCommandPool();
-    createColorResources();
-    createDepthResources();
-    createFramebuffers();
     createTextureImage();
     createTextureImageView();
     createTextureSampler();
     loadModel();
     createVertexBuffer();
     createIndexBuffer();
+
+    getSwapChainImageCount();
     createUniformBuffer();
     createDescriptorPool();
     createDescriptorSets();
-    createCommandBuffers();
     createSyncObjects();
+
+    if (!compileShaders()) {
+        throw std::runtime_error("Error while compiling shaders initially, exiting.");
+    }
+
+    buildSwapChain();
 }
 
 
@@ -139,6 +156,11 @@ void VulkanTestApplication::createInstance() {
 void VulkanTestApplication::mainLoop() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        if (m_reloadShaders) {
+            reloadShaders();
+        }
+
         drawFrame();
     }
 
@@ -209,7 +231,7 @@ void VulkanTestApplication::cleanup() {
 
     device.destroy(descriptorSetLayout);
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
+    for (size_t i = 0; i < swapChainImageCount; i++) {
         device.destroy( uniformBuffers[i]);
         device.free(uniformBuffersMemory[i]);
     }
@@ -443,6 +465,17 @@ vk::Extent2D VulkanTestApplication::chooseSwapExtent(const vk::SurfaceCapabiliti
     }
 }
 
+void VulkanTestApplication::getSwapChainImageCount() {
+    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+
+    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+    if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
+        imageCount = swapChainSupport.capabilities.maxImageCount;
+    }
+
+    swapChainImageCount = imageCount;
+}
+
 void VulkanTestApplication::createSwapChain() {
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
@@ -450,15 +483,12 @@ void VulkanTestApplication::createSwapChain() {
     vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
-    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-    if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
-        imageCount = swapChainSupport.capabilities.maxImageCount;
-    }
+    getSwapChainImageCount();
 
     vk::SwapchainCreateInfoKHR createInfo = {};
     createInfo.surface = surface;
 
-    createInfo.minImageCount = imageCount;
+    createInfo.minImageCount = swapChainImageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
     createInfo.imageExtent = extent;
@@ -491,19 +521,34 @@ void VulkanTestApplication::createSwapChain() {
 }
 
 void VulkanTestApplication::createImageViews() {
-    swapChainImageViews.resize(swapChainImages.size());
+    swapChainImageViews.resize(swapChainImageCount);
 
-    for (uint32_t i = 0; i < swapChainImages.size(); i++) {
+    for (uint32_t i = 0; i < swapChainImageCount; i++) {
         swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, vk::ImageAspectFlagBits::eColor, 1);
     }
 }
 
-void VulkanTestApplication::createGraphicsPipeline() {
-    auto vertShaderCode = compiler.loadShader("shaders/triangle.vert");
-    auto fragShaderCode = compiler.loadShader("shaders/triangle.frag");
+bool VulkanTestApplication::compileShaders() {
+    bool vertSuccess, fragSuccess;
+    std::vector<unsigned int> newVertCode, newFragCode;
 
-    vk::ShaderModule vertShaderModule = createShaderModule(vertShaderCode);
-    vk::ShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+    std::tie(vertSuccess, newVertCode) = compiler.loadShader("shaders/triangle.vert");
+    std::tie(fragSuccess, newFragCode) = compiler.loadShader("shaders/triangle.frag");
+
+
+    if (vertSuccess && fragSuccess) {
+        vertCode = newVertCode;
+        fragCode = newFragCode;
+        return true;
+    }
+
+    return false;
+}
+
+void VulkanTestApplication::createGraphicsPipeline() {
+
+    vk::ShaderModule vertShaderModule = createShaderModule(vertCode);
+    vk::ShaderModule fragShaderModule = createShaderModule(fragCode);
 
     vk::PipelineShaderStageCreateInfo vertShaderStageInfo = {};
     vertShaderStageInfo.stage = vk::ShaderStageFlagBits::eVertex;
@@ -775,16 +820,20 @@ commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 void VulkanTestApplication::drawFrame() {
     device.waitForFences(inFlightFences[currentFrame], VK_TRUE, 1e+9);
 
-    vk::ResultValue<uint32_t> resultValue = device.acquireNextImageKHR(swapChain,1e+9, imageAvailableSemaphores[currentFrame],nullptr );
-    auto result = resultValue.result;
-    auto imageIndex = resultValue.value;
 
-    if (result == vk::Result::eErrorOutOfDateKHR) {
+    unsigned int imageIndex = -1;
+    try {
+        vk::ResultValue<uint32_t> resultValue = device.acquireNextImageKHR(swapChain, 1e+9, imageAvailableSemaphores[currentFrame], nullptr);
+        imageIndex = resultValue.value;
+    } catch (vk::OutOfDateKHRError error){
         recreateSwapChain();
         return;
-    } else if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
-        throw std::runtime_error("failed to acquire swap chain image!");
     }
+
+    if (imageIndex == -1) {
+        throw std::runtime_error("invalid imageindex");
+    }
+
 
     updateUniformBuffer(imageIndex);
 
@@ -818,13 +867,23 @@ void VulkanTestApplication::drawFrame() {
 
     presentInfo.pImageIndices = &imageIndex;
 
-    result = presentQueue.presentKHR(presentInfo);
+    bool recreate = m_framebufferResized;
+    try {
+        auto result = presentQueue.presentKHR(presentInfo);
+        if (result == vk::Result::eSuboptimalKHR) {
+            recreate = true;
+        }
+        if (result != vk::Result::eSuccess) {
+            throw std::runtime_error("failed to present swap chain image: " + vk::to_string(result));
+        }
+    } catch (vk::OutOfDateKHRError) {
+        recreate = true;
+    }
+//    result = presentQueue.presentKHR(presentInfo);
 
-    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || framebufferResized) {
-        framebufferResized = false;
+    if (recreate) {
+        m_framebufferResized = false;
         recreateSwapChain();
-    } else if (result != vk::Result::eSuccess) {
-        throw std::runtime_error("failed to present swap chain image!");
     }
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -925,14 +984,7 @@ void VulkanTestApplication::recreateSwapChain() {
 
     cleanupSwapChain();
 
-    createSwapChain();
-    createImageViews();
-    createRenderPass();
-    createGraphicsPipeline();
-    createColorResources();
-    createDepthResources();
-    createFramebuffers();
-    createCommandBuffers();
+    buildSwapChain();
 }
 
 void VulkanTestApplication::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
@@ -1004,10 +1056,10 @@ void VulkanTestApplication::createDescriptorSetLayout() {
 void VulkanTestApplication::createUniformBuffer() {
     vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    uniformBuffers.resize(swapChainImages.size());
-    uniformBuffersMemory.resize(swapChainImages.size());
+    uniformBuffers.resize(swapChainImageCount);
+    uniformBuffersMemory.resize(swapChainImageCount);
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
+    for (size_t i = 0; i < swapChainImageCount; i++) {
         createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, uniformBuffers[i], uniformBuffersMemory[i]);
     }
 }
@@ -1030,31 +1082,32 @@ void VulkanTestApplication::updateUniformBuffer(uint32_t currentImage) {
 }
 
 void VulkanTestApplication::createDescriptorPool() {
+    getSwapChainImageCount();
     std::array<vk::DescriptorPoolSize, 2> poolSizes = {};
     poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
+    poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
     poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
-    poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
+    poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
 
     vk::DescriptorPoolCreateInfo poolInfo = {};
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());
+    poolInfo.maxSets = static_cast<uint32_t>(swapChainImageCount);
 
     descriptorPool = device.createDescriptorPool(poolInfo);
 }
 
 void VulkanTestApplication::createDescriptorSets() {
-    std::vector<vk::DescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
+    std::vector<vk::DescriptorSetLayout> layouts(swapChainImageCount, descriptorSetLayout);
     vk::DescriptorSetAllocateInfo allocInfo = {};
     allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImages.size());
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImageCount);
     allocInfo.pSetLayouts = layouts.data();
 
-    descriptorSets.resize(swapChainImages.size());
+    descriptorSets.resize(swapChainImageCount);
     descriptorSets = device.allocateDescriptorSets(allocInfo);
 
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
+    for (size_t i = 0; i < swapChainImageCount; i++) {
         vk::DescriptorBufferInfo bufferInfo = {};
         bufferInfo.buffer = uniformBuffers[i];
         bufferInfo.offset = 0;
@@ -1388,7 +1441,7 @@ void VulkanTestApplication::loadModel() {
                     1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
             };
 
-            vertex.color = {1.0f, 1.0f, 1.0f, 1.0f};
+            vertex.color = {0.5f, 1.0f, 1.0f, 1.0f};
 
             if (uniqueVertices.count(vertex) == 0) {
                 uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
@@ -1502,4 +1555,28 @@ void VulkanTestApplication::createColorResources() {
     colorImageView = createImageView(colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
 
     transitionImageLayout(colorImage, colorFormat, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal, 1);
+}
+
+void VulkanTestApplication::reloadShaders() {
+    graphicsQueue.waitIdle();
+
+    device.destroy(pipelineLayout);
+    device.destroy(graphicsPipeline);
+    device.freeCommandBuffers(commandPool, commandBuffers);
+
+    createGraphicsPipeline();
+    createCommandBuffers();
+
+    m_reloadShaders = false;
+}
+
+void VulkanTestApplication::buildSwapChain() {
+    createSwapChain();
+    createImageViews();
+    createRenderPass();
+    createGraphicsPipeline();
+    createColorResources();
+    createDepthResources();
+    createFramebuffers();
+    createCommandBuffers();
 }

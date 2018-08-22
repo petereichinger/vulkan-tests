@@ -6,6 +6,7 @@
 #include "FileHelpers.h"
 #include <iostream>
 #include <sstream>
+#include <tuple>
 bool ShaderLoader::m_glslangInitialized;
 
 const TBuiltInResource DefaultTBuiltInResource = {
@@ -105,7 +106,7 @@ const TBuiltInResource DefaultTBuiltInResource = {
                            }
 };
 
-std::vector<unsigned int> ShaderLoader::loadShader(const std::string &fileName) {
+std::tuple<bool, std::vector<unsigned int>> ShaderLoader::loadShader(const std::string &fileName) {
     auto fileContentsVector = readFile(fileName);
     std::string contents(fileContentsVector.begin(), fileContentsVector.end());
     auto contentsC = contents.c_str();
@@ -122,11 +123,10 @@ std::vector<unsigned int> ShaderLoader::loadShader(const std::string &fileName) 
 
     if (!shader.parse(&Resources, 100, false, messages))
     {
-        std::stringstream ss;
-        ss << "Error in " << fileName << std::endl;
-        ss << shader.getInfoLog() << std::endl;
-        ss << shader.getInfoDebugLog()<< std::endl;
-        throw std::runtime_error(ss.str());
+        std::cerr << "Error in " << fileName << std::endl;
+        std::cerr << shader.getInfoLog() << std::endl;
+        std::cerr << shader.getInfoDebugLog()<< std::endl;
+        return std::make_tuple(false, std::vector<unsigned int>());
     }
 
     glslang::TProgram Program;
@@ -134,11 +134,10 @@ std::vector<unsigned int> ShaderLoader::loadShader(const std::string &fileName) 
 
     if(!Program.link(messages))
     {
-        std::stringstream ss;
-        ss << "GLSL Linking Failed for: " << fileName << std::endl;
-        ss << shader.getInfoLog() << std::endl;
-        ss << shader.getInfoDebugLog() << std::endl;
-        throw std::runtime_error(ss.str());
+        std::cerr << "GLSL Linking Failed for: " << fileName << std::endl;
+        std::cerr << shader.getInfoLog() << std::endl;
+        std::cerr << shader.getInfoDebugLog() << std::endl;
+        return std::make_tuple(false, std::vector<unsigned int>());
     }
 
 
@@ -147,7 +146,7 @@ std::vector<unsigned int> ShaderLoader::loadShader(const std::string &fileName) 
     glslang::SpvOptions spvOptions;
     glslang::GlslangToSpv(*Program.getIntermediate(stage), SpirV, &logger, &spvOptions);
 
-    return SpirV;
+    return std::make_tuple(true, SpirV);
 }
 
 EShLanguage ShaderLoader::determineShaderStage(const std::string &fileName) {
