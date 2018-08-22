@@ -36,3 +36,7 @@ ELSE()
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_SOURCE_DIR}/shaders ${CMAKE_BINARY_DIR}/shaders)
 ENDIF ()
+
+set(CMAKE_SYSTEM_LIBRARY_PATH ${CMAKE_SYSTEM_LIBRARY_PATH}:/usr/local/opt/llvm/lib)
+
+message("blubb ${CMAKE_SYSTEM_LIBRARY_PATH}")

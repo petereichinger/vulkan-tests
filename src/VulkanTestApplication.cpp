@@ -154,6 +154,7 @@ void VulkanTestApplication::createInstance() {
 }
 
 void VulkanTestApplication::mainLoop() {
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
@@ -821,16 +822,16 @@ void VulkanTestApplication::drawFrame() {
     device.waitForFences(inFlightFences[currentFrame], VK_TRUE, 1e+9);
 
 
-    unsigned int imageIndex = -1;
+    uint32_t imageIndex = std::numeric_limits<uint32_t>::max();
     try {
         vk::ResultValue<uint32_t> resultValue = device.acquireNextImageKHR(swapChain, 1e+9, imageAvailableSemaphores[currentFrame], nullptr);
         imageIndex = resultValue.value;
-    } catch (vk::OutOfDateKHRError error){
+    } catch (vk::OutOfDateKHRError& error){
         recreateSwapChain();
         return;
     }
 
-    if (imageIndex == -1) {
+    if (imageIndex == std::numeric_limits<uint32_t>::max()) {
         throw std::runtime_error("invalid imageindex");
     }
 
@@ -876,10 +877,9 @@ void VulkanTestApplication::drawFrame() {
         if (result != vk::Result::eSuccess) {
             throw std::runtime_error("failed to present swap chain image: " + vk::to_string(result));
         }
-    } catch (vk::OutOfDateKHRError) {
+    } catch (vk::OutOfDateKHRError&) {
         recreate = true;
     }
-//    result = presentQueue.presentKHR(presentInfo);
 
     if (recreate) {
         m_framebufferResized = false;
