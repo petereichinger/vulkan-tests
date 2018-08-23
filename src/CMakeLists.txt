@@ -32,7 +32,6 @@ target_sources(${PROJECT_NAME} PUBLIC main.cpp
         FileHelpers.h FileHelpers.cpp
         shader-loader/ShaderLoader.cpp shader-loader/ShaderLoader.h)
 
-message("${CMAKE_SOURCE_DIR}")
 #Add external dependencies
 target_include_directories(${PROJECT_NAME} PUBLIC
     glfw/include
