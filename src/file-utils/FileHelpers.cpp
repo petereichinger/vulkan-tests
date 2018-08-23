@@ -3,7 +3,7 @@
 //
 
 #include "FileHelpers.h"
-#ifdef WINDOWS
+#ifdef _WIN32
 #include <Windows.h>
 #else
 #include <sys/stat.h>
@@ -33,7 +33,7 @@ long getFileWriteTime(const std::string &fileName) {
 #ifndef WINDOWS
     struct stat sb;
 	stat(fileName.c_str(), &sb);
-	return sb.st_mtime;
+	return static_cast<long>(sb.st_mtime);
 #else
     ULARGE_INTEGER create, access, write;
     HANDLE hFile = CreateFileA(name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);

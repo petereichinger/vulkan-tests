@@ -810,7 +810,6 @@ commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 void VulkanTestApplication::drawFrame() {
     device.waitForFences(inFlightFences[currentFrame], VK_TRUE, 1e+9);
 
-
     uint32_t imageIndex = std::numeric_limits<uint32_t>::max();
     try {
         vk::ResultValue<uint32_t> resultValue = device.acquireNextImageKHR(swapChain, 1e+9, imageAvailableSemaphores[currentFrame], nullptr);

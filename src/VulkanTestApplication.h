@@ -233,7 +233,7 @@ private:
 
     bool checkDeviceExtensionSupport(const vk::PhysicalDevice &device);
 
-    int swapChainImageCount;
+    uint32_t swapChainImageCount;
 
     SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
 
