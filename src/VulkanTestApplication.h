@@ -23,8 +23,7 @@
 #include <chrono>
 
 #include <array>
-#include "shader-loader/ShaderLoader.h"
-
+#include "shader-loader/ShaderUpdater.h"
 
 
 struct QueueFamilyIndices {
@@ -103,9 +102,11 @@ struct UniformBufferObject {
 class VulkanTestApplication {
 public:
     void run();
-    bool framebufferResized = false;
-
+    void requestFramebufferResize();
+    void requestShaderReload();
 private:
+    bool m_framebufferResized = false;
+    bool m_reloadShaders = false;
     const std::string applicationName= "VulkanTest";
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
@@ -128,10 +129,7 @@ private:
 #endif
 
     //Shader compiler
-
-
-    ShaderLoader compiler;
-
+    ShaderUpdater updater;
 
     // Window to render to
     GLFWwindow* window;
@@ -169,6 +167,9 @@ private:
     vk::PipelineLayout pipelineLayout;
 
     std::vector<vk::Framebuffer> swapChainFramebuffers;
+
+    std::vector<unsigned int> vertCode;
+    std::vector<unsigned int> fragCode;
 
     VkCommandPool commandPool;
 
@@ -231,6 +232,8 @@ private:
     void createSurface();
 
     bool checkDeviceExtensionSupport(const vk::PhysicalDevice &device);
+
+    int swapChainImageCount;
 
     SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device);
 
@@ -322,4 +325,12 @@ private:
     vk::SampleCountFlagBits getMaxUsableSampleCount();
 
     void createColorResources() ;
+
+    void reloadShaders();
+
+    void getSwapChainImageCount();
+
+    void buildSwapChain();
+
+    bool initShaders();
 };

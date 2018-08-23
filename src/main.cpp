@@ -3,7 +3,7 @@
 #include <functional>
 #include <cstdlib>
 #include "VulkanTestApplication.h"
-
+#include "file-utils/FileHelpers.h"
 int main() {
     VulkanTestApplication app;
 
