@@ -19,7 +19,7 @@ add_subdirectory(glfw)
 add_subdirectory(glslang)
 
 #Set source files
-add_executable(${PROJECT_NAME} file-utils/FileWatcher.cpp file-utils/FileWatcher.h shader-loader/ShaderUpdater.cpp shader-loader/ShaderUpdater.h)
+add_executable(${PROJECT_NAME} file-utils/FileWatcher.cpp file-utils/FileWatcher.h shader-loader/ShaderUpdater.cpp shader-loader/ShaderUpdater.h external/my_tiny_loader.h)
 
 target_sources(${PROJECT_NAME} PUBLIC main.cpp
         VulkanTestApplication.h VulkanTestApplication.cpp

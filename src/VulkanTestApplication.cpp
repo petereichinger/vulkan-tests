@@ -13,11 +13,87 @@
 #include <fstream>
 #include <unordered_map>
 #include "file-utils/FileHelpers.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "glm/gtx/string_cast.hpp"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+
+namespace tinyobj {
+    bool operator<(tinyobj::index_t const& lhs,
+                   tinyobj::index_t const& rhs) {
+        if (lhs.vertex_index == rhs.vertex_index) {
+            if (lhs.normal_index == rhs.normal_index) {
+                return lhs.texcoord_index < rhs.texcoord_index;
+            } else
+                return lhs.normal_index < rhs.normal_index;
+        } else
+            return lhs.vertex_index < rhs.vertex_index;
+    }
+
+    bool operator==(tinyobj::index_t const& lhs,
+                    tinyobj::index_t const& rhs) {
+        if (lhs.vertex_index == rhs.vertex_index) {
+            if (lhs.normal_index == rhs.normal_index) {
+                return lhs.texcoord_index == rhs.texcoord_index;
+            } else
+                return false;
+        } else
+            return false;
+    }
+};
+
+void generate_normals(tinyobj::attrib_t& attribs, tinyobj::mesh_t& mesh) {
+    std::vector<uint32_t> indices;
+    std::map<tinyobj::index_t, uint32_t> vertexToIndexMap;
+    // save vertex positions as glm vectors
+    std::vector<glm::fvec3> positions(mesh.indices.size());
+    uint32_t index = 0;
+    for (auto const& vert_properties : mesh.indices) {
+        auto it = vertexToIndexMap.find(vert_properties);
+        if (it == vertexToIndexMap.end()) {
+            indices.push_back(index);
+        }
+        else {
+            indices.push_back(it->second);
+        }
+        positions[index] = glm::fvec3{attribs.vertices[3 * vert_properties.vertex_index + 0]
+                ,attribs.vertices[3 * vert_properties.vertex_index + 1]
+                ,attribs.vertices[3 * vert_properties.vertex_index + 2]
+        };
+        ++index;
+    }
+    // calculate triangle normal
+    std::vector<glm::fvec3> normals(mesh.num_face_vertices.size(), glm::fvec3{0.0f});
+    // size_t index_offset = 0;
+    for (unsigned i = 0; i < mesh.num_face_vertices.size(); i+=3) {
+        assert(mesh.num_face_vertices[i] == 3);
+        glm::fvec3 normal = glm::cross(positions[i+1] - positions[i], positions[i+2] - positions[i]);
+        // accumulate vertex normals
+        normals[i] += normal;
+        normals[i+1] += normal;
+        normals[i+2] += normal;
+    }
+
+    for (unsigned i = 0; i < mesh.indices.size(); ++i) {
+        tinyobj::index_t& vert_properties = mesh.indices[i];
+        // not a duplicate
+        auto unique_idx = indices.at(i);
+        if (unique_idx == i) {
+            vert_properties.normal_index = uint32_t(attribs.normals.size() / 3);
+            glm::fvec3 normal = glm::normalize(normals[i]);
+            attribs.normals.emplace_back(normal[0]);
+            attribs.normals.emplace_back(normal[1]);
+            attribs.normals.emplace_back(normal[2]);
+        }
+        else {
+            vert_properties.normal_index = mesh.indices.at(unique_idx).normal_index;
+        }
+    }
+}
 
 vk::Result CreateDebugReportCallback(vk::Instance instance, vk::Device device,
                                      const VkDebugReportCallbackCreateInfoEXT &createInfo,
@@ -241,6 +317,8 @@ void VulkanTestApplication::cleanup() {
     for (size_t i = 0; i < swapChainImageCount; i++) {
         device.destroy( uniformBuffers[i]);
         device.free(uniformBuffersMemory[i]);
+        device.destroy(lightBuffers[i]);
+        device.free(lightBuffersMemory[i]);
     }
 
     device.destroy(indexBuffer);
@@ -1026,14 +1104,20 @@ void VulkanTestApplication::createDescriptorSetLayout() {
     uboLayoutBinding.descriptorCount = 1;
     uboLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eVertex;
 
+    vk::DescriptorSetLayoutBinding lightLayoutBinding = {};
+    lightLayoutBinding.binding = 1;
+    lightLayoutBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
+    lightLayoutBinding.descriptorCount = 1;
+    lightLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
+
     vk::DescriptorSetLayoutBinding samplerLayoutBinding = {};
-    samplerLayoutBinding.binding = 1;
+    samplerLayoutBinding.binding = 2;
     samplerLayoutBinding.descriptorCount = 1;
     samplerLayoutBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler;
     samplerLayoutBinding.pImmutableSamplers = nullptr;
     samplerLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
 
-    std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+    std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding,lightLayoutBinding, samplerLayoutBinding};
     vk::DescriptorSetLayoutCreateInfo layoutInfo = {};
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
@@ -1043,12 +1127,21 @@ void VulkanTestApplication::createDescriptorSetLayout() {
 
 void VulkanTestApplication::createUniformBuffer() {
     vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+    vk::DeviceSize lightBufferSize = sizeof(LightBufferObject);
 
     uniformBuffers.resize(swapChainImageCount);
     uniformBuffersMemory.resize(swapChainImageCount);
 
+    lightBuffers.resize(swapChainImageCount);
+    lightBuffersMemory.resize(swapChainImageCount);
+
     for (size_t i = 0; i < swapChainImageCount; i++) {
-        createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, uniformBuffers[i], uniformBuffersMemory[i]);
+        createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer,
+                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                uniformBuffers[i], uniformBuffersMemory[i]);
+        createBuffer(lightBufferSize, vk::BufferUsageFlagBits::eUniformBuffer,
+                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                lightBuffers[i], lightBuffersMemory[i]);
     }
 }
 
@@ -1065,19 +1158,31 @@ void VulkanTestApplication::updateUniformBuffer(uint32_t currentImage) {
     ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
     ubo.spherize = glm::vec4(0.5f * (1.0f + glm::sin(glm::pi<float>() * time)));
+    ubo.normal = glm::inverseTranspose(ubo.view * ubo.model);
+
+    LightBufferObject lbo = {};
+    lbo.lightPos = glm::rotate(glm::mat4(1.0f), time * glm::radians(180.0f), glm::vec3(0.0f,1.0f, 0.0f)) * glm::vec4(10,10,0,1);
+//    lbo.lightPos = glm::vec4(-10, 10, 10, 1);
+    lbo.ambientColor = glm::vec4(0.1f);
 
     void* data = device.mapMemory(uniformBuffersMemory[currentImage], 0, sizeof(ubo));
     memcpy(data, &ubo, sizeof(ubo));
     device.unmapMemory(uniformBuffersMemory[currentImage]);
+
+    data = device.mapMemory(lightBuffersMemory[currentImage], 0, sizeof(lbo));
+    memcpy(data, &lbo, sizeof(lbo));
+    device.unmapMemory(lightBuffersMemory[currentImage]);
 }
 
 void VulkanTestApplication::createDescriptorPool() {
     getSwapChainImageCount();
-    std::array<vk::DescriptorPoolSize, 2> poolSizes = {};
+    std::array<vk::DescriptorPoolSize, 3> poolSizes = {};
     poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
-    poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
+    poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
+    poolSizes[2].type = vk::DescriptorType::eCombinedImageSampler;
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(swapChainImageCount);
 
     vk::DescriptorPoolCreateInfo poolInfo = {};
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
@@ -1103,12 +1208,17 @@ void VulkanTestApplication::createDescriptorSets() {
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
+        vk::DescriptorBufferInfo lightInfo = {};
+        lightInfo.buffer = lightBuffers[i];
+        lightInfo.offset = 0;
+        lightInfo.range = sizeof(LightBufferObject);
+
         vk::DescriptorImageInfo imageInfo = {};
         imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
         imageInfo.imageView = textureImageView;
         imageInfo.sampler = textureSampler;
 
-        std::array<vk::WriteDescriptorSet, 2> descriptorWrites = {};
+        std::array<vk::WriteDescriptorSet, 3> descriptorWrites = {};
 
         descriptorWrites[0].dstSet = descriptorSets[i];
         descriptorWrites[0].dstBinding = 0;
@@ -1120,9 +1230,16 @@ void VulkanTestApplication::createDescriptorSets() {
         descriptorWrites[1].dstSet = descriptorSets[i];
         descriptorWrites[1].dstBinding = 1;
         descriptorWrites[1].dstArrayElement = 0;
-        descriptorWrites[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+        descriptorWrites[1].descriptorType = vk::DescriptorType::eUniformBuffer;
         descriptorWrites[1].descriptorCount = 1;
-        descriptorWrites[1].pImageInfo = &imageInfo;
+        descriptorWrites[1].pBufferInfo = &lightInfo;
+
+        descriptorWrites[2].dstSet = descriptorSets[i];
+        descriptorWrites[2].dstBinding = 2;
+        descriptorWrites[2].dstArrayElement = 0;
+        descriptorWrites[2].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+        descriptorWrites[2].descriptorCount = 1;
+        descriptorWrites[2].pImageInfo = &imageInfo;
 
         device.updateDescriptorSets(descriptorWrites, nullptr);
     }
@@ -1413,6 +1530,10 @@ void VulkanTestApplication::loadModel() {
         throw std::runtime_error(err);
     }
 
+//    generate_normals(attrib,shapes[0].mesh);
+
+
+
     std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
 
 
@@ -1427,13 +1548,14 @@ void VulkanTestApplication::loadModel() {
             };
 
             if (attrib.normals.size() > 0) {
-
                 vertex.normal = {
                         attrib.normals[3 * index.normal_index + 0],
                         attrib.normals[3 * index.normal_index + 1],
                         attrib.normals[3 * index.normal_index + 2],
-                        1.0f
+                        0.0f
                 };
+            } else {
+                std::cerr << "No normals in mesh" << std::endl;
             }
 
             vertex.texCoord = {

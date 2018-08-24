@@ -19,6 +19,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/hash.hpp"
+#include "glm/gtc/matrix_inverse.hpp"
 
 #include <chrono>
 
@@ -105,6 +106,12 @@ struct UniformBufferObject {
     glm::mat4 view;
     glm::mat4 proj;
     glm::vec4 spherize;
+    glm::mat4 normal;
+};
+
+struct LightBufferObject {
+    glm::vec4 lightPos;
+    glm::vec4 ambientColor;
 };
 
 class VulkanTestApplication {
@@ -200,6 +207,11 @@ private:
 
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
+
+    std::vector<vk::Buffer> lightBuffers;
+    std::vector<vk::DeviceMemory> lightBuffersMemory;
+
+
     vk::DescriptorPool descriptorPool;
     std::vector<vk::DescriptorSet> descriptorSets;
 
