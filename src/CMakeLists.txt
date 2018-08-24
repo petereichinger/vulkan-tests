@@ -3,8 +3,8 @@
 
 set(SHADER_DIRECTORY ${CMAKE_SOURCE_DIR}/src/shaders)
 
-#Configure project to build with C++11
-set(CMAKE_CXX_STANDARD 17)
+#Configure project to build with C++14
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
