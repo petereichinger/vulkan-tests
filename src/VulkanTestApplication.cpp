@@ -799,7 +799,7 @@ void VulkanTestApplication::createCommandBuffers() {
         commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
 
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets[i], nullptr);
-commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
         commandBuffer.endRenderPass();
 
@@ -808,11 +808,11 @@ commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 }
 
 void VulkanTestApplication::drawFrame() {
-    device.waitForFences(inFlightFences[currentFrame], VK_TRUE, 1e+9);
+    device.waitForFences(inFlightFences[currentFrame], VK_TRUE, WAIT_TIME);
 
-    uint32_t imageIndex = std::numeric_limits<uint32_t>::max();
+    uint32_t imageIndex;
     try {
-        vk::ResultValue<uint32_t> resultValue = device.acquireNextImageKHR(swapChain, 1e+9, imageAvailableSemaphores[currentFrame], nullptr);
+        vk::ResultValue<uint32_t> resultValue = device.acquireNextImageKHR(swapChain, WAIT_TIME, imageAvailableSemaphores[currentFrame], nullptr);
         imageIndex = resultValue.value;
     } catch (vk::OutOfDateKHRError& error){
         recreateSwapChain();
@@ -820,7 +820,7 @@ void VulkanTestApplication::drawFrame() {
     }
 
     if (imageIndex == std::numeric_limits<uint32_t>::max()) {
-        throw std::runtime_error("invalid imageindex");
+        throw std::runtime_error("invalid image index");
     }
 
 
@@ -945,8 +945,8 @@ void VulkanTestApplication::cleanupSwapChain() {
     device.free(depthImageMemory);
 
 
-    for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
-        device.destroy( swapChainFramebuffers[i]);
+    for (auto swapChainFramebuffer : swapChainFramebuffers) {
+        device.destroy(swapChainFramebuffer);
     }
 
     device.freeCommandBuffers(commandPool, commandBuffers);
@@ -955,8 +955,8 @@ void VulkanTestApplication::cleanupSwapChain() {
     device.destroy(pipelineLayout);
     device.destroy(renderPass);
 
-    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-        device.destroy( swapChainImageViews[i]);
+    for (auto swapChainImageView : swapChainImageViews) {
+        device.destroy(swapChainImageView);
     }
 
     device.destroy(swapChain);
@@ -1059,10 +1059,12 @@ void VulkanTestApplication::updateUniformBuffer(uint32_t currentImage) {
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo = {};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    auto rotate = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    ubo.model = glm::rotate(rotate, time * glm::radians(45.0f), glm::vec3(0,1,0));
     ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
     ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
+    ubo.spherize = glm::vec4(0.5f * (1.0f + glm::sin(glm::pi<float>() * time)));
 
     void* data = device.mapMemory(uniformBuffersMemory[currentImage], 0, sizeof(ubo));
     memcpy(data, &ubo, sizeof(ubo));
@@ -1423,6 +1425,16 @@ void VulkanTestApplication::loadModel() {
                     attrib.vertices[3 * index.vertex_index + 2],
                     1.0f
             };
+
+            if (attrib.normals.size() > 0) {
+
+                vertex.normal = {
+                        attrib.normals[3 * index.normal_index + 0],
+                        attrib.normals[3 * index.normal_index + 1],
+                        attrib.normals[3 * index.normal_index + 2],
+                        1.0f
+                };
+            }
 
             vertex.texCoord = {
                     attrib.texcoords[2 * index.texcoord_index + 0],

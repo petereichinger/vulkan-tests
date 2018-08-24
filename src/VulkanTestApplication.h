@@ -43,6 +43,7 @@ struct SwapChainSupportDetails {
 
 struct Vertex {
     glm::vec4 pos;
+    glm::vec4 normal;
     glm::vec4 color;
     glm::vec2 texCoord;
 
@@ -56,8 +57,8 @@ struct Vertex {
         return bindingDescription;
     }
 
-    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
-        std::array<vk::VertexInputAttributeDescription, 3> attributeDescriptions = {};
+    static std::array<vk::VertexInputAttributeDescription, 4> getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 4> attributeDescriptions = {};
 
         attributeDescriptions[0].binding = 0;
         attributeDescriptions[0].location = 0;
@@ -67,27 +68,33 @@ struct Vertex {
         attributeDescriptions[1].binding = 0;
         attributeDescriptions[1].location = 1;
         attributeDescriptions[1].format = vk::Format::eR32G32B32A32Sfloat;
-        attributeDescriptions[1].offset = static_cast<uint32_t>(offsetof(Vertex, color));
+        attributeDescriptions[1].offset = static_cast<uint32_t>(offsetof(Vertex, normal));
 
         attributeDescriptions[2].binding = 0;
         attributeDescriptions[2].location = 2;
-        attributeDescriptions[2].format = vk::Format::eR32G32Sfloat;
-        attributeDescriptions[2].offset = static_cast<uint32_t>(offsetof(Vertex, texCoord));
+        attributeDescriptions[2].format = vk::Format::eR32G32B32A32Sfloat;
+        attributeDescriptions[2].offset = static_cast<uint32_t>(offsetof(Vertex, color));
+
+        attributeDescriptions[3].binding = 0;
+        attributeDescriptions[3].location = 3;
+        attributeDescriptions[3].format = vk::Format::eR32G32Sfloat;
+        attributeDescriptions[3].offset = static_cast<uint32_t>(offsetof(Vertex, texCoord));
 
         return attributeDescriptions;
     }
 
     bool operator==(const Vertex& other) const {
-        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+        return pos == other.pos && normal == other.normal && color == other.color && texCoord == other.texCoord;
     }
 };
 
 namespace std {
     template<> struct hash<Vertex> {
         size_t operator()(Vertex const& vertex) const {
-            return ((hash<glm::vec3>()(vertex.pos) ^
-                     (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-                   (hash<glm::vec2>()(vertex.texCoord) << 1);
+            return ((hash<glm::vec4>()(vertex.pos) ^
+                    (hash<glm::vec4>()(vertex.normal))<< 1 ^
+                    (hash<glm::vec4>()(vertex.color) << 2)) >> 1) ^
+                    (hash<glm::vec2>()(vertex.texCoord) << 1);
         }
     };
 }
@@ -97,6 +104,7 @@ struct UniformBufferObject {
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
+    glm::vec4 spherize;
 };
 
 class VulkanTestApplication {
@@ -110,9 +118,10 @@ private:
     const std::string applicationName= "VulkanTest";
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
-    const std::string MODEL_PATH = "meshes/chalet.obj";
-    const std::string TEXTURE_PATH = "textures/chalet.jpg";
+    const std::string MODEL_PATH = "meshes/spot.obj";
+    const std::string TEXTURE_PATH = "textures/spot.png";
     const int MAX_FRAMES_IN_FLIGHT = 2;
+    const uint64_t WAIT_TIME = 1000000000;
 
     const std::vector<const char*> validationLayers = {
             "VK_LAYER_LUNARG_standard_validation"

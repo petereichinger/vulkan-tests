@@ -5,11 +5,13 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
     mat4 proj;
+    vec4 spherize;
 } ubo;
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inColor;
-layout(location = 2) in vec2 inTexCoord;
+layout(location = 0) in vec4 inPosition;
+layout(location = 1) in vec4 inNormal;
+layout(location = 2) in vec4 inColor;
+layout(location = 3) in vec2 inTexCoord;
 
 
 layout(location = 0) out vec3 fragColor;
@@ -20,7 +22,9 @@ out gl_PerVertex {
 };
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * 2*vec4(inPosition, 1.0);
-    fragColor = inColor;
+    vec4 normalPos = ubo.model * inPosition;
+    vec4 spherePos = ubo.model * vec4(1.1 * normalize(inPosition.xyz), 1.0f);
+    gl_Position = ubo.proj * ubo.view * mix(normalPos, spherePos, ubo.spherize.x);
+    fragColor = vec3(inColor);
     fragTexCoord = inTexCoord;
 }

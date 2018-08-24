@@ -21,12 +21,6 @@ add_subdirectory(glslang)
 #Set source files
 add_executable(${PROJECT_NAME} file-utils/FileWatcher.cpp file-utils/FileWatcher.h shader-loader/ShaderUpdater.cpp shader-loader/ShaderUpdater.h)
 
-#set_target_properties(${PROJECT_NAME} PROPERTIES
-#        CMAKE_CXX_STANDARD 17
-#        CMAKE_CXX_STANDARD_REQUIRED ON
-#        CMAKE_CXX_EXTENSIONS OFF
-#        )
-
 target_sources(${PROJECT_NAME} PUBLIC main.cpp
         VulkanTestApplication.h VulkanTestApplication.cpp
         file-utils/FileHelpers.h file-utils/FileHelpers.cpp
@@ -46,3 +40,8 @@ target_link_libraries(${PROJECT_NAME}
     ${Vulkan_LIBRARIES}
         glslang SPIRV
     )
+
+#copies executable to top level source tree
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
