@@ -258,11 +258,11 @@ void VulkanTestApplication::cleanup() {
 
     device.destroy(commandPool);
 
-    device.destroy();
-
     if (enableValidationLayers) {
         DestroyDebugReportCallback(instance, device, callback);
     }
+
+    device.destroy();
 
     instance.destroy(surface);
     instance.destroy();
