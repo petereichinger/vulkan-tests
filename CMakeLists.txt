@@ -15,8 +15,6 @@ endif()
 
 set(CMAKE_SYSTEM_LIBRARY_PATH ${CMAKE_SYSTEM_LIBRARY_PATH}:/usr/local/opt/llvm/lib)
 
-message("blubb ${CMAKE_SYSTEM_LIBRARY_PATH}")
-
 add_subdirectory(src)
 
 add_custom_target(GetAssets ALL
