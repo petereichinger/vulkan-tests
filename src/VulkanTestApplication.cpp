@@ -173,6 +173,11 @@ void VulkanTestApplication::initVulkan() {
     setupDebugCallback();
     createSurface();
     pickPhysicalDevice();
+
+    if (true) {
+        showMemoryStats();
+    }
+
     createLogicalDevice();
 
     createDescriptorSetLayout();
@@ -395,9 +400,7 @@ bool VulkanTestApplication::isDeviceSuitable(const vk::PhysicalDevice &device) {
         SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
-
     vk::PhysicalDeviceFeatures deviceFeatures = device.getFeatures();
-
     return indices.isComplete() && extensionsSupported && swapChainAdequate && deviceFeatures.samplerAnisotropy;
 }
 
@@ -1155,7 +1158,7 @@ void VulkanTestApplication::updateUniformBuffer(uint32_t currentImage) {
     auto rotate = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     ubo.model = glm::rotate(rotate, time * glm::radians(45.0f), glm::vec3(0,1,0));
     ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+    ubo.proj = glm::perspective(glm::radians(90.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
     ubo.proj[1][1] *= -1;
     ubo.spherize = glm::vec4(0.5f * (1.0f + glm::sin(glm::pi<float>() * time)));
     ubo.normal = glm::inverseTranspose(ubo.view * ubo.model);
@@ -1708,4 +1711,20 @@ bool VulkanTestApplication::initShaders() {
     success |= updater.registerShader("shaders/triangle.vert");
 
     return success;
+}
+
+void VulkanTestApplication::showMemoryStats() {
+    vk::PhysicalDeviceMemoryProperties memProps = physicalDevice.getMemoryProperties();
+
+    std::cout << "HEAPS" << std::endl;
+    for (int i = 0; i < memProps.memoryHeapCount; ++i) {
+        std::cout <<i << ": "<< memProps.memoryHeaps[i].size <<" " << vk::to_string(memProps.memoryHeaps[i].flags) << std::endl;
+    }
+    
+    std:: cout << "MEMORY" <<std::endl;
+
+    for (int j = 0; j < memProps.memoryTypeCount; ++j) {
+        auto memoryType = memProps.memoryTypes[j];
+        std::cout << j << ": " << memoryType.heapIndex << " " << vk::to_string(memoryType.propertyFlags) << std::endl;
+    }
 }

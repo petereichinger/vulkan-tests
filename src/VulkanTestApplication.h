@@ -354,4 +354,6 @@ private:
     void buildSwapChain();
 
     bool initShaders();
+
+    void showMemoryStats();
 };
