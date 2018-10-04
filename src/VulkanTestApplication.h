@@ -184,9 +184,6 @@ private:
 
     std::vector<vk::Framebuffer> swapChainFramebuffers;
 
-    std::vector<unsigned int> vertCode;
-    std::vector<unsigned int> fragCode;
-
     VkCommandPool commandPool;
 
     std::vector<vk::CommandBuffer> commandBuffers;
@@ -199,18 +196,19 @@ private:
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
-    vk::Buffer vertexBuffer;
-    vk::DeviceMemory vertexBufferMemory;
+    vk::Buffer modelBuffer;
+    vk::DeviceMemory modelBufferMemory;
 
-    vk::Buffer indexBuffer;
-    vk::DeviceMemory indexBufferMemory;
+    vk::DeviceSize vertexOffset;
+    vk::DeviceSize indexOffset;
 
-    std::vector<vk::Buffer> uniformBuffers;
-    std::vector<vk::DeviceMemory> uniformBuffersMemory;
+    vk::DeviceSize uniformStartOffset;
+    vk::DeviceSize uniformMemorySize;
+    vk::DeviceSize lightStartOffset;
+    vk::DeviceSize lightMemorySize;
 
-    std::vector<vk::Buffer> lightBuffers;
-    std::vector<vk::DeviceMemory> lightBuffersMemory;
-
+    vk::Buffer uniformBuffer;
+    vk::DeviceMemory uniformBufferMemory;
 
     vk::DescriptorPool descriptorPool;
     std::vector<vk::DescriptorSet> descriptorSets;
@@ -231,6 +229,8 @@ private:
     vk::Image colorImage;
     vk::DeviceMemory colorImageMemory;
     vk::ImageView colorImageView;
+
+    void createModelBuffer();
 
     void initWindow();
     void initVulkan();
@@ -282,8 +282,6 @@ private:
 
     void createSyncObjects();
 
-    void createVertexBuffer();
-
     void recreateSwapChain();
 
     void cleanupSwapChain();
@@ -291,12 +289,9 @@ private:
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
     void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
-                      vk::Buffer &buffer,
-                      vk::DeviceMemory &bufferMemory);
+                      vk::Buffer &buffer, vk::DeviceMemory &bufferMemory, vk::SharingMode sharingMode = vk::SharingMode::eExclusive);
 
     void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
-
-    void createIndexBuffer();
 
     void createDescriptorSetLayout();
 
@@ -356,4 +351,6 @@ private:
     bool initShaders();
 
     void showMemoryStats();
+    vk::PhysicalDeviceLimits physicalDeviceLimits;
+    void getPhysicalDeviceLimits();
 };

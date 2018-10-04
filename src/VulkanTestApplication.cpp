@@ -13,6 +13,7 @@
 #include <fstream>
 #include <unordered_map>
 #include "file-utils/FileHelpers.h"
+#include "helpers/pow2.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -173,12 +174,12 @@ void VulkanTestApplication::initVulkan() {
     setupDebugCallback();
     createSurface();
     pickPhysicalDevice();
-
-    if (true) {
-        showMemoryStats();
-    }
+    getPhysicalDeviceLimits();
+    showMemoryStats();
 
     createLogicalDevice();
+
+    getSwapChainImageCount();
 
     createDescriptorSetLayout();
 
@@ -187,10 +188,12 @@ void VulkanTestApplication::initVulkan() {
     createTextureImageView();
     createTextureSampler();
     loadModel();
-    createVertexBuffer();
-    createIndexBuffer();
+//
+//    createVertexBuffer();
+//    createIndexBuffer();
 
-    getSwapChainImageCount();
+    createModelBuffer();
+
     createUniformBuffer();
     createDescriptorPool();
     createDescriptorSets();
@@ -240,8 +243,8 @@ void VulkanTestApplication::mainLoop() {
         glfwPollEvents();
 
         if (updater.checkForModifications()) {
-            vertCode = updater.getShaderCode("shaders/triangle.vert");
-            fragCode = updater.getShaderCode("shaders/triangle.frag");
+//            vertCode = updater.getShaderCode("shaders/triangle.vert");
+//            fragCode = updater.getShaderCode("shaders/triangle.frag");
             m_reloadShaders = true;
         }
 
@@ -319,19 +322,18 @@ void VulkanTestApplication::cleanup() {
 
     device.destroy(descriptorSetLayout);
 
-    for (size_t i = 0; i < swapChainImageCount; i++) {
-        device.destroy( uniformBuffers[i]);
-        device.free(uniformBuffersMemory[i]);
-        device.destroy(lightBuffers[i]);
-        device.free(lightBuffersMemory[i]);
-    }
+//    for (size_t i = 0; i < swapChainImageCount; i++) {
+//        device.destroy( uniformBuffers[i]);
+//        device.free(uniformBuffersMemory[i]);
+//        device.destroy(lightBuffers[i]);
+//        device.free(lightBuffersMemory[i]);
+//    }
 
-    device.destroy(indexBuffer);
-    device.free(indexBufferMemory);
+    device.destroy(uniformBuffer);
+    device.free(uniformBufferMemory);
 
-
-    device.destroy( vertexBuffer);
-    device.free( vertexBufferMemory);
+    device.destroy(modelBuffer);
+    device.free(modelBufferMemory);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         device.destroy(renderFinishedSemaphores[i]);
@@ -401,7 +403,10 @@ bool VulkanTestApplication::isDeviceSuitable(const vk::PhysicalDevice &device) {
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
     vk::PhysicalDeviceFeatures deviceFeatures = device.getFeatures();
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && deviceFeatures.samplerAnisotropy;
+    vk::PhysicalDeviceProperties deviceProperties = device.getProperties();
+    std::cout << "Memory Allocs: " << deviceProperties.limits.maxMemoryAllocationCount << std::endl;
+
+    return deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu && indices.isComplete() && extensionsSupported && swapChainAdequate && deviceFeatures.samplerAnisotropy;
 }
 
 QueueFamilyIndices VulkanTestApplication::findQueueFamilies(vk::PhysicalDevice device) {
@@ -874,10 +879,15 @@ void VulkanTestApplication::createCommandBuffers() {
 
         commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
-        std::array<vk::Buffer,1> vertexBuffers {vertexBuffer};
-        std::array<vk::DeviceSize,1> offsets = {0};
+        std::array<vk::Buffer,1> vertexBuffers {modelBuffer};
+        std::array<vk::DeviceSize,1> offsets = {vertexOffset};
         commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
-        commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+        commandBuffer.bindIndexBuffer(modelBuffer, indexOffset, vk::IndexType::eUint32);
+//        std::array<vk::Buffer,1> vertexBuffers {vertexBuffer};
+//        std::array<vk::DeviceSize,1> offsets = {0};
+//        commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
+//        commandBuffer.bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+
 
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSets[i], nullptr);
         commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
@@ -986,24 +996,40 @@ uint32_t VulkanTestApplication::findMemoryType(uint32_t typeFilter, vk::MemoryPr
     throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void VulkanTestApplication::createVertexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+void VulkanTestApplication::createModelBuffer() {
+    vk::DeviceSize vertexSize = sizeof(Vertex) * vertices.size();
+    vk::DeviceSize indexSize = sizeof(uint32_t) * indices.size();
+
+    vertexOffset = 0;
+    indexOffset = vertexOffset + vertexSize;
+
 
     vk::Buffer stagingBuffer;
     vk::DeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, stagingBuffer, stagingBufferMemory);
+    createBuffer(vertexSize + indexSize, vk::BufferUsageFlagBits::eTransferSrc,
+                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                 stagingBuffer, stagingBufferMemory);
 
-    void* data = device.mapMemory(stagingBufferMemory,0,bufferSize);
-    memcpy(data, vertices.data(), (size_t) bufferSize);
+    void* data = device.mapMemory(stagingBufferMemory, 0, vertexSize);
+    std::memcpy(data, vertices.data(), (size_t) vertexSize);
     device.unmapMemory(stagingBufferMemory);
 
-    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, vertexBuffer, vertexBufferMemory);
+    data = device.mapMemory(stagingBufferMemory,vertexSize, indexSize);
+    std::memcpy(data, indices.data(), (size_t) indexSize);
+    device.unmapMemory(stagingBufferMemory);
 
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+    createBuffer(vertexSize + indexSize,
+            vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer| vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eVertexBuffer,
+                 vk::MemoryPropertyFlagBits::eDeviceLocal, modelBuffer, modelBufferMemory);
+
+
+    copyBuffer(stagingBuffer, modelBuffer, vertexSize + indexSize);
 
     device.destroy(stagingBuffer);
     device.free(stagingBufferMemory);
 }
+
 
 void VulkanTestApplication::copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -1058,16 +1084,16 @@ void VulkanTestApplication::recreateSwapChain() {
 
 void VulkanTestApplication::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
                                          vk::MemoryPropertyFlags properties, vk::Buffer &buffer,
-                                         vk::DeviceMemory &bufferMemory) {
+                                         vk::DeviceMemory &bufferMemory, vk::SharingMode sharingMode) {
     vk::BufferCreateInfo bufferInfo = {};
     bufferInfo.size = size;
     bufferInfo.usage = usage;
-    bufferInfo.sharingMode = vk::SharingMode::eExclusive;
-
+    bufferInfo.sharingMode = sharingMode;
     buffer = device.createBuffer(bufferInfo);
 
     vk::MemoryRequirements memRequirements = device.getBufferMemoryRequirements(buffer);
 
+//    std::cout << vk::to_string(memRequirements.memoryTypeBits) <<std::endl;
     vk::MemoryAllocateInfo allocInfo = {};
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
@@ -1077,27 +1103,7 @@ void VulkanTestApplication::createBuffer(vk::DeviceSize size, vk::BufferUsageFla
     device.bindBufferMemory(buffer,bufferMemory, 0);
 }
 
-void VulkanTestApplication::createIndexBuffer() {
-    vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-    vk::Buffer stagingBuffer;
-    vk::DeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferSrc,
-            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-            stagingBuffer, stagingBufferMemory);
-
-    void* data = device.mapMemory(stagingBufferMemory,0, bufferSize);
-    memcpy(data, indices.data(), (size_t) bufferSize);
-    device.unmapMemory(stagingBufferMemory);
-
-    createBuffer(bufferSize,vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
-            vk::MemoryPropertyFlagBits::eDeviceLocal, indexBuffer, indexBufferMemory);
-
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
-    device.destroy(stagingBuffer);
-    device.free(stagingBufferMemory);
-}
 
 void VulkanTestApplication::createDescriptorSetLayout() {
     // Descriptor set layout is used in the pipeline
@@ -1129,23 +1135,18 @@ void VulkanTestApplication::createDescriptorSetLayout() {
 }
 
 void VulkanTestApplication::createUniformBuffer() {
-    vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
-    vk::DeviceSize lightBufferSize = sizeof(LightBufferObject);
 
-    uniformBuffers.resize(swapChainImageCount);
-    uniformBuffersMemory.resize(swapChainImageCount);
+    auto minUboSize = physicalDeviceLimits.minUniformBufferOffsetAlignment;
+    uniformMemorySize = nextPowerOfTwo(std::max(minUboSize, (unsigned long long)sizeof(UniformBufferObject)));
+    lightMemorySize = nextPowerOfTwo(std::max(minUboSize, (unsigned long long)sizeof(LightBufferObject)));
+    std::cout << minUboSize << " " << uniformMemorySize << " " << lightMemorySize << std::endl;
+    uniformStartOffset = 0;
+    lightStartOffset = uniformStartOffset + uniformMemorySize * swapChainImageCount;
+    auto totalUBOSize = swapChainImageCount * (lightMemorySize + uniformMemorySize);
 
-    lightBuffers.resize(swapChainImageCount);
-    lightBuffersMemory.resize(swapChainImageCount);
-
-    for (size_t i = 0; i < swapChainImageCount; i++) {
-        createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer,
-                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                uniformBuffers[i], uniformBuffersMemory[i]);
-        createBuffer(lightBufferSize, vk::BufferUsageFlagBits::eUniformBuffer,
-                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                lightBuffers[i], lightBuffersMemory[i]);
-    }
+    createBuffer(totalUBOSize, vk::BufferUsageFlagBits::eUniformBuffer,
+                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                 uniformBuffer, uniformBufferMemory);
 }
 
 void VulkanTestApplication::updateUniformBuffer(uint32_t currentImage) {
@@ -1168,13 +1169,13 @@ void VulkanTestApplication::updateUniformBuffer(uint32_t currentImage) {
 //    lbo.lightPos = glm::vec4(-10, 10, 10, 1);
     lbo.ambientColor = glm::vec4(0.1f);
 
-    void* data = device.mapMemory(uniformBuffersMemory[currentImage], 0, sizeof(ubo));
+    void* data = device.mapMemory(uniformBufferMemory, uniformStartOffset + uniformMemorySize * currentImage, uniformMemorySize);
     memcpy(data, &ubo, sizeof(ubo));
-    device.unmapMemory(uniformBuffersMemory[currentImage]);
+    device.unmapMemory(uniformBufferMemory);
 
-    data = device.mapMemory(lightBuffersMemory[currentImage], 0, sizeof(lbo));
+    data = device.mapMemory(uniformBufferMemory, lightStartOffset + lightMemorySize * currentImage, lightMemorySize);
     memcpy(data, &lbo, sizeof(lbo));
-    device.unmapMemory(lightBuffersMemory[currentImage]);
+    device.unmapMemory(uniformBufferMemory);
 }
 
 void VulkanTestApplication::createDescriptorPool() {
@@ -1207,14 +1208,14 @@ void VulkanTestApplication::createDescriptorSets() {
 
     for (size_t i = 0; i < swapChainImageCount; i++) {
         vk::DescriptorBufferInfo bufferInfo = {};
-        bufferInfo.buffer = uniformBuffers[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
+        bufferInfo.buffer = uniformBuffer;
+        bufferInfo.offset = uniformStartOffset + i * uniformMemorySize;
+        bufferInfo.range = uniformMemorySize;
 
         vk::DescriptorBufferInfo lightInfo = {};
-        lightInfo.buffer = lightBuffers[i];
-        lightInfo.offset = 0;
-        lightInfo.range = sizeof(LightBufferObject);
+        lightInfo.buffer = uniformBuffer;
+        lightInfo.offset = lightStartOffset + i * lightMemorySize;
+        lightInfo.range = lightMemorySize;
 
         vk::DescriptorImageInfo imageInfo = {};
         imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
@@ -1727,4 +1728,8 @@ void VulkanTestApplication::showMemoryStats() {
         auto memoryType = memProps.memoryTypes[j];
         std::cout << j << ": " << memoryType.heapIndex << " " << vk::to_string(memoryType.propertyFlags) << std::endl;
     }
+}
+
+void VulkanTestApplication::getPhysicalDeviceLimits() {
+    physicalDeviceLimits = physicalDevice.getProperties().limits;
 }
