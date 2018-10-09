@@ -350,7 +350,9 @@ private:
 
     bool initShaders();
 
-    void showMemoryStats();
+    void showPhysicalDeviceStats();
     vk::PhysicalDeviceLimits physicalDeviceLimits;
     void getPhysicalDeviceLimits();
+
+    void testBufferAlignment();
 };

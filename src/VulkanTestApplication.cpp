@@ -175,9 +175,11 @@ void VulkanTestApplication::initVulkan() {
     createSurface();
     pickPhysicalDevice();
     getPhysicalDeviceLimits();
-    showMemoryStats();
+    showPhysicalDeviceStats();
 
     createLogicalDevice();
+
+    testBufferAlignment();
 
     getSwapChainImageCount();
 
@@ -206,7 +208,23 @@ void VulkanTestApplication::initVulkan() {
     buildSwapChain();
 }
 
+void VulkanTestApplication::testBufferAlignment() {
+    for(int i = 1; i < 0x200; ++i) {
+        std::cout << i << " ";
 
+        vk::BufferCreateInfo bci;
+        bci.size = 1025;
+        bci.sharingMode = vk::SharingMode ::eExclusive;
+        bci.usage = static_cast<vk::BufferUsageFlags >(i);
+        vk::Buffer buffer = device.createBuffer(bci);
+
+        auto requirements = device.getBufferMemoryRequirements(buffer);
+
+        std::cout << requirements.size << " " << requirements.memoryTypeBits << " " <<requirements.alignment << std::endl;
+
+        device.destroy(buffer);
+    }
+}
 
 void VulkanTestApplication::createInstance() {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
@@ -1314,7 +1332,7 @@ VulkanTestApplication::createImage(int width, int height, uint32_t mipLevels, vk
     image = device.createImage(imageInfo);
 
     vk::MemoryRequirements memRequirements = device.getImageMemoryRequirements(image);
-
+    std::cout << "memrequirementstype bits" << memRequirements.memoryTypeBits << std::endl;
     vk::MemoryAllocateInfo allocInfo = {};
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
@@ -1714,7 +1732,7 @@ bool VulkanTestApplication::initShaders() {
     return success;
 }
 
-void VulkanTestApplication::showMemoryStats() {
+void VulkanTestApplication::showPhysicalDeviceStats() {
     vk::PhysicalDeviceMemoryProperties memProps = physicalDevice.getMemoryProperties();
 
     std::cout << "HEAPS" << std::endl;
